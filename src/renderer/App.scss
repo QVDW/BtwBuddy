@@ -1,0 +1,21 @@
+// App-specific styles
+.app {
+  // Any additional app-specific styles can go here
+  // Most styling is already handled by buddy.scss
+}
+
+// Loading screen styles (already in buddy.scss but can be extended here)
+.buddy-loading {
+  .loading-content {
+    .spinner {
+      // Additional spinner styles if needed
+    }
+  }
+}
+
+// Modal styles (already in buddy.scss but can be extended here)
+.buddy-modal {
+  .modal-content {
+    // Additional modal styles if needed
+  }
+} 
