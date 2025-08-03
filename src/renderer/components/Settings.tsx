@@ -113,19 +113,19 @@ export const Settings: React.FC<SettingsProps> = ({
                   <Trash2 size={20} />
                 </div>
                 <div className="setting-text">
-                  <h4>Alle Gegevens Wissen</h4>
-                  <p>Verwijder alle transacties en instellingen</p>
+                  <h4>Alle Gegevens Permanent Wissen</h4>
+                  <p>Verwijder alle transacties, instellingen en geüploade bestanden permanent van je PC</p>
                 </div>
               </div>
               <button 
                 className="btn-danger" 
                 onClick={() => {
-                  if (confirm('Weet je zeker dat je alle gegevens wilt wissen? Dit kan niet ongedaan worden gemaakt.')) {
+                  if (confirm('Weet je zeker dat je alle gegevens permanent wilt wissen? Dit verwijdert alle data van je PC en kan niet ongedaan worden gemaakt.')) {
                     onClearData()
                   }
                 }}
               >
-                Wissen
+                Permanent Wissen
               </button>
             </div>
           </div>

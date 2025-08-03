@@ -160,6 +160,19 @@ ipcMain.handle('delete-transaction', (event, transactionId) => {
   return true
 })
 
+ipcMain.handle('clear-all-data', () => {
+  // Clear all data from electron-store
+  store.clear()
+  
+  // Also clear uploaded files directory
+  const uploadsDir = path.join(app.getPath('userData'), 'uploads')
+  if (fs.existsSync(uploadsDir)) {
+    fs.rmSync(uploadsDir, { recursive: true, force: true })
+  }
+  
+  return true
+})
+
 // File handling
 ipcMain.handle('select-file', async () => {
   const result = await dialog.showOpenDialog(mainWindow!, {

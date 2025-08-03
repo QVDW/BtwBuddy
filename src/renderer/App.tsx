@@ -236,11 +236,16 @@ function App() {
 
   const handleClearAllData = async () => {
     try {
+      // Clear all data from electron-store (permanent storage)
+      await window.electronAPI.clearAllData()
+      
+      // Clear local state
       setTransactions([])
       setSelectedMonth({ year: new Date().getFullYear(), month: new Date().getMonth() + 1 })
       setHasSeenTutorial(false)
       localStorage.removeItem('btwbuddy-tutorial-seen')
-      alert('Alle gegevens zijn gewist')
+      
+      alert('Alle gegevens zijn permanent gewist van je PC')
     } catch (err) {
       setError('Fout bij het wissen van gegevens')
       console.error('Error clearing data:', err)

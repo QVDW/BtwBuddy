@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveTransaction: (transaction: any) => ipcRenderer.invoke('save-transaction', transaction),
   updateTransaction: (transaction: any) => ipcRenderer.invoke('update-transaction', transaction),
   deleteTransaction: (transactionId: string) => ipcRenderer.invoke('delete-transaction', transactionId),
+  clearAllData: () => ipcRenderer.invoke('clear-all-data'),
   
   // File handling
   selectFile: () => ipcRenderer.invoke('select-file'),
@@ -27,6 +28,7 @@ declare global {
       saveTransaction: (transaction: any) => Promise<any>
       updateTransaction: (transaction: any) => Promise<any>
       deleteTransaction: (transactionId: string) => Promise<boolean>
+      clearAllData: () => Promise<boolean>
       selectFile: () => Promise<any>
       exportMonth: (data: any) => Promise<any>
       minimizeWindow: () => Promise<void>
