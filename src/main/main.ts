@@ -3,6 +3,7 @@ import * as path from 'path'
 import * as fs from 'fs'
 import Store from 'electron-store'
 import * as ExcelJS from 'exceljs'
+import { initializeAutoUpdater } from './auto-updater'
 
 // Initialize electron-store for data persistence
 const store = new Store()
@@ -75,6 +76,11 @@ function createWindow(): void {
       splashWindow.close()
     }
     mainWindow?.show()
+    
+    // Initialize auto updater after main window is ready
+    if (mainWindow) {
+      initializeAutoUpdater(mainWindow)
+    }
   })
 
   mainWindow.on('closed', () => {

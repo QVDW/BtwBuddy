@@ -3,7 +3,7 @@
   "version": "1.0.1",
   "description": "Een moderne, gebruiksvriendelijke desktop applicatie voor zelfstandigen en kleine ondernemers om hun boekhouding en BTW beheer eenvoudig bij te houden.",
   "main": "dist/main.js",
-  "homepage": "https://github.com/your-username/vatbuddy#readme",
+  "homepage": "https://github.com/QVDW/BtwBuddy#readme",
   "author": {
     "name": "BtwBuddy Team"
   },
@@ -25,10 +25,12 @@
     "lint:fix": "eslint . --ext ts,tsx --fix",
     "type-check": "tsc --noEmit",
     "clean": "rimraf dist build release",
-    "prebuild": "npm run clean"
+    "prebuild": "npm run clean",
+    "release": "node scripts/release.js"
   },
   "dependencies": {
     "electron-store": "^8.1.0",
+    "electron-updater": "^6.6.2",
     "exceljs": "^4.4.0",
     "lucide-react": "^0.263.1",
     "react": "^18.2.0",
@@ -71,6 +73,11 @@
         "to": "assets"
       }
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "QVDW",
+      "repo": "BtwBuddy"
+    },
     "win": {
       "target": [
         {
@@ -133,9 +140,9 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/vatbuddy.git"
+    "url": "https://github.com/QVDW/BtwBuddy.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/vatbuddy/issues"
+    "url": "https://github.com/QVDW/BtwBuddy/issues"
   }
 }

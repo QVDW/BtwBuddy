@@ -23,7 +23,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     amountInclusive: transaction?.amountInclusive || undefined,
     amountExclusive: transaction?.amountExclusive || undefined,
     vatAmount: transaction?.vatAmount || undefined,
-    vatPercentage: transaction?.vatPercentage || 21,
+    vatPercentage: transaction?.vatPercentage ?? 21,
     invoiceFile: transaction?.invoiceFile
   })
 
