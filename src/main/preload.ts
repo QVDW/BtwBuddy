@@ -17,7 +17,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Window controls
   minimizeWindow: () => ipcRenderer.invoke('minimize-window'),
   maximizeWindow: () => ipcRenderer.invoke('maximize-window'),
-  closeWindow: () => ipcRenderer.invoke('close-window')
+  closeWindow: () => ipcRenderer.invoke('close-window'),
+  
+  // Auto updater
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  quitAndInstall: () => ipcRenderer.invoke('quit-and-install'),
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  onAutoUpdaterStatus: (callback: (status: any) => void) => {
+    ipcRenderer.on('auto-updater-status', (event, status) => callback(status))
+  }
 })
 
 // Type definitions for TypeScript
@@ -34,6 +42,10 @@ declare global {
       minimizeWindow: () => Promise<void>
       maximizeWindow: () => Promise<void>
       closeWindow: () => Promise<void>
+      checkForUpdates: () => Promise<any>
+      quitAndInstall: () => Promise<any>
+      getAppVersion: () => Promise<{ version: string; name: string }>
+      onAutoUpdaterStatus: (callback: (status: any) => void) => void
     }
   }
 } 
