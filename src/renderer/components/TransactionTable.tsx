@@ -139,7 +139,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                   <th>Factuur</th>
                 </>
               )}
-                             <th>{showVatAmount ? 'BTW Bedrag' : 'Bedrag'}</th>
+              <th>{showVatAmount ? 'BTW Bedrag' : 'Bedrag'}</th>
               {!compact && <th>Acties</th>}
             </tr>
           </thead>
@@ -170,7 +170,10 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                       {transaction.amountExclusive ? formatCurrency(transaction.amountExclusive) : '-'}
                     </td>
                     <td className="vat-cell">
-                      {transaction.vatAmount ? formatCurrency(transaction.vatAmount) : '-'}
+                      {transaction.vatAmount !== undefined && transaction.vatAmount !== null 
+                        ? formatCurrency(transaction.vatAmount) 
+                        : '-'
+                      }
                     </td>
                     <td className="percentage-cell">
                       {transaction.vatPercentage}%
@@ -195,7 +198,9 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                     transaction.type === 'income' ? 'amount-positive' : 'amount-negative'
                   }`}>
                     {showVatAmount 
-                      ? (transaction.vatAmount ? formatCurrency(transaction.vatAmount) : '-')
+                      ? (transaction.vatAmount !== undefined && transaction.vatAmount !== null 
+                          ? formatCurrency(transaction.vatAmount) 
+                          : '-')
                       : (transaction.amountExclusive ? formatCurrency(transaction.amountExclusive) : '-')
                     }
                   </span>

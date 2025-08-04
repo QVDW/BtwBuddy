@@ -4,6 +4,14 @@ import { Transaction, MonthlySummary } from '../types'
  * Calculate VAT amount and exclusive amount from inclusive amount
  */
 export function calculateFromInclusive(inclusive: number, vatPercentage: number) {
+  // Handle 0% VAT case
+  if (vatPercentage === 0) {
+    return {
+      amountExclusive: Math.round(inclusive * 100) / 100,
+      vatAmount: 0
+    }
+  }
+  
   const vatAmount = (inclusive * vatPercentage) / (100 + vatPercentage)
   const exclusive = inclusive - vatAmount
   return {
@@ -16,6 +24,14 @@ export function calculateFromInclusive(inclusive: number, vatPercentage: number)
  * Calculate VAT amount and inclusive amount from exclusive amount
  */
 export function calculateFromExclusive(exclusive: number, vatPercentage: number) {
+  // Handle 0% VAT case
+  if (vatPercentage === 0) {
+    return {
+      amountInclusive: Math.round(exclusive * 100) / 100,
+      vatAmount: 0
+    }
+  }
+  
   const vatAmount = (exclusive * vatPercentage) / 100
   const inclusive = exclusive + vatAmount
   return {
@@ -67,7 +83,7 @@ export function getMonthlySummary(
     .reduce((sum, t) => sum + (t.amountInclusive || 0), 0)
 
   const totalVat = filteredTransactions
-    .reduce((sum, t) => sum + (t.vatAmount || 0), 0)
+    .reduce((sum, t) => sum + (t.vatAmount !== undefined && t.vatAmount !== null ? t.vatAmount : 0), 0)
 
   return {
     year,

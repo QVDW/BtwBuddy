@@ -36,22 +36,27 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     // Only auto-calculate if the user is not actively editing a field
     if (activeField) return
 
-    if (formData.amountInclusive && formData.vatPercentage) {
-      const { amountExclusive, vatAmount } = calculateFromInclusive(formData.amountInclusive, formData.vatPercentage)
+    // Ensure we have a valid VAT percentage
+    const vatPercentage = formData.vatPercentage || 0
+
+    if (formData.amountInclusive && formData.amountInclusive > 0) {
+      const { amountExclusive, vatAmount } = calculateFromInclusive(formData.amountInclusive, vatPercentage)
       setFormData(prev => ({
         ...prev,
         amountExclusive,
         vatAmount
       }))
-    } else if (formData.amountExclusive && formData.vatPercentage) {
-      const { amountInclusive, vatAmount } = calculateFromExclusive(formData.amountExclusive, formData.vatPercentage)
+    } else if (formData.amountExclusive && formData.amountExclusive > 0) {
+      const { amountInclusive, vatAmount } = calculateFromExclusive(formData.amountExclusive, vatPercentage)
       setFormData(prev => ({
         ...prev,
         amountInclusive,
         vatAmount
       }))
     }
-  }, [formData.amountInclusive, formData.amountExclusive, formData.vatPercentage, activeField])
+  }, [formData.amountInclusive, formData.amountExclusive, activeField])
+
+
 
   const handleInputChange = (field: string, value: any) => {
     console.log('handleInputChange called:', field, value) // Debug log
@@ -72,15 +77,17 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     setTimeout(() => {
       setActiveField(null)
       // Trigger calculation after user finishes editing
-      if (formData.amountInclusive && formData.vatPercentage && activeField === 'inclusive' && formData.amountInclusive > 0) {
-        const { amountExclusive, vatAmount } = calculateFromInclusive(formData.amountInclusive, formData.vatPercentage)
+      const vatPercentage = formData.vatPercentage || 0
+      
+      if (formData.amountInclusive && formData.amountInclusive > 0 && activeField === 'inclusive') {
+        const { amountExclusive, vatAmount } = calculateFromInclusive(formData.amountInclusive, vatPercentage)
         setFormData(prev => ({
           ...prev,
           amountExclusive,
           vatAmount
         }))
-      } else if (formData.amountExclusive && formData.vatPercentage && activeField === 'exclusive' && formData.amountExclusive > 0) {
-        const { amountInclusive, vatAmount } = calculateFromExclusive(formData.amountExclusive, formData.vatPercentage)
+      } else if (formData.amountExclusive && formData.amountExclusive > 0 && activeField === 'exclusive') {
+        const { amountInclusive, vatAmount } = calculateFromExclusive(formData.amountExclusive, vatPercentage)
         setFormData(prev => ({
           ...prev,
           amountInclusive,
@@ -111,9 +118,25 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
+    // Ensure VAT amount is calculated before submission
+    let finalVatAmount = formData.vatAmount || 0
+    const vatPercentage = formData.vatPercentage || 0
+    
+    // Recalculate VAT amount if we have amounts but no VAT amount
+    if (!formData.vatAmount && (formData.amountInclusive || formData.amountExclusive)) {
+      if (formData.amountInclusive && formData.amountInclusive > 0) {
+        const { vatAmount } = calculateFromInclusive(formData.amountInclusive, vatPercentage)
+        finalVatAmount = vatAmount
+      } else if (formData.amountExclusive && formData.amountExclusive > 0) {
+        const { vatAmount } = calculateFromExclusive(formData.amountExclusive, vatPercentage)
+        finalVatAmount = vatAmount
+      }
+    }
+    
     const validationErrors = validateTransaction({
       ...formData,
-      date: formData.date.toISOString().split('T')[0]
+      date: formData.date.toISOString().split('T')[0],
+      vatAmount: finalVatAmount
     })
 
     if (Object.keys(validationErrors).length > 0) {
@@ -127,8 +150,8 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
       type: formData.type,
       amountInclusive: formData.amountInclusive,
       amountExclusive: formData.amountExclusive,
-      vatAmount: formData.vatAmount,
-      vatPercentage: formData.vatPercentage,
+      vatAmount: finalVatAmount,
+      vatPercentage: vatPercentage,
       invoiceFile: formData.invoiceFile
     })
   }
@@ -194,12 +217,34 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           <label className="form-label">BTW Percentage *</label>
           <input
             type="number"
-            value={formData.vatPercentage}
-            onChange={(e) => handleInputChange('vatPercentage', parseFloat(e.target.value) || 0)}
+            value={formData.vatPercentage || 0}
+            onChange={(e) => {
+              const value = parseFloat(e.target.value) || 0
+              handleInputChange('vatPercentage', value)
+              
+              // Immediately recalculate BTW when percentage changes
+              const vatPercentage = value
+              if (formData.amountInclusive && formData.amountInclusive > 0) {
+                const { amountExclusive, vatAmount } = calculateFromInclusive(formData.amountInclusive, vatPercentage)
+                setFormData(prev => ({
+                  ...prev,
+                  amountExclusive,
+                  vatAmount
+                }))
+              } else if (formData.amountExclusive && formData.amountExclusive > 0) {
+                const { amountInclusive, vatAmount } = calculateFromExclusive(formData.amountExclusive, vatPercentage)
+                setFormData(prev => ({
+                  ...prev,
+                  amountInclusive,
+                  vatAmount
+                }))
+              }
+            }}
             className={`form-input ${errors.vatPercentage ? 'error' : ''}`}
             min="0"
             max="100"
             step="0.1"
+            placeholder="21"
           />
           {errors.vatPercentage && <div className="form-error">{errors.vatPercentage}</div>}
         </div>
@@ -243,7 +288,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
       </div>
 
       {/* VAT Amount Display */}
-      {formData.vatAmount && (
+      {(formData.vatAmount !== undefined && formData.vatAmount !== null) && (
         <div className="vat-display">
           <div className="vat-label">BTW Bedrag:</div>
           <div className="vat-amount">

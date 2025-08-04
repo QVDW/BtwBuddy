@@ -307,7 +307,7 @@ async function createBelastingdienstExcel(transactions: any[]): Promise<ExcelJS.
     const transactionType = t.type === 'income' ? 'Inkomst' : 'Uitgave'
     const amountInclusive = t.amountInclusive || 0
     const amountExclusive = t.amountExclusive || 0
-    const vatAmount = t.vatAmount || 0
+    const vatAmount = t.vatAmount !== undefined && t.vatAmount !== null ? t.vatAmount : 0
     const vatPercentage = (t.vatPercentage || 0) / 100 // Convert from percentage to decimal
     const invoiceFile = t.invoiceFile?.originalName || ''
     
@@ -493,7 +493,7 @@ async function createBTWExcel(transactions: any[]): Promise<ExcelJS.Workbook> {
     const transactionType = t.type === 'income' ? 'Inkomst' : 'Uitgave'
     const btwType = t.type === 'income' ? 'BTW Verkopen' : 'BTW Aankopen'
     const amountExclusive = t.amountExclusive || 0
-    const vatAmount = t.vatAmount || 0
+    const vatAmount = t.vatAmount !== undefined && t.vatAmount !== null ? t.vatAmount : 0
     const vatPercentage = (t.vatPercentage || 0) / 100 // Convert from percentage to decimal
     const invoiceFile = t.invoiceFile?.originalName || ''
     
@@ -570,8 +570,8 @@ async function createBTWExcel(transactions: any[]): Promise<ExcelJS.Workbook> {
   })
   
   // Add summary section with enhanced styling
-  const totalVatIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.vatAmount || 0), 0)
-  const totalVatExpense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + (t.vatAmount || 0), 0)
+  const totalVatIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.vatAmount !== undefined && t.vatAmount !== null ? t.vatAmount : 0), 0)
+  const totalVatExpense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + (t.vatAmount !== undefined && t.vatAmount !== null ? t.vatAmount : 0), 0)
   const vatToPay = totalVatIncome - totalVatExpense
   
   // Add empty row
@@ -650,8 +650,8 @@ function createSummaryContent(transactions: any[], year: number, month: number):
   
   const totalIncome = incomeTransactions.reduce((sum, t) => sum + (t.amountExclusive || 0), 0)
   const totalExpense = expenseTransactions.reduce((sum, t) => sum + (t.amountExclusive || 0), 0)
-  const totalVatIncome = incomeTransactions.reduce((sum, t) => sum + (t.vatAmount || 0), 0)
-  const totalVatExpense = expenseTransactions.reduce((sum, t) => sum + (t.vatAmount || 0), 0)
+  const totalVatIncome = incomeTransactions.reduce((sum, t) => sum + (t.vatAmount !== undefined && t.vatAmount !== null ? t.vatAmount : 0), 0)
+  const totalVatExpense = expenseTransactions.reduce((sum, t) => sum + (t.vatAmount !== undefined && t.vatAmount !== null ? t.vatAmount : 0), 0)
   const netResult = totalIncome - totalExpense
   const vatToPay = totalVatIncome - totalVatExpense
   
