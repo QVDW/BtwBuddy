@@ -1,81 +1,82 @@
-name: Build and Release
-
-on:
-  push:
-    tags:
-      - 'v*'
-
-jobs:
-  build-and-release:
-    runs-on: windows-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-        cache: 'npm'
-
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Build application
-      run: npm run build
-
-    - name: Build release files (without publishing)
-      run: npm run dist:win:no-publish
-
-    - name: Generate latest.yml
-      run: npm run generate-latest-yml
-
-    - name: List release files
-      run: |
-        Write-Host "Checking release directory contents:"
-        Get-ChildItem -Path "release" -Force
-        Write-Host "Checking if latest.yml exists:"
-        if (Test-Path "release/latest.yml") {
-          Write-Host "✅ latest.yml exists"
-          Get-Content "release/latest.yml"
-        } else {
-          Write-Host "❌ latest.yml not found"
-        }
-        Write-Host "Checking if BtwBuddy-Setup.exe exists:"
-        if (Test-Path "release/BtwBuddy-Setup.exe") {
-          Write-Host "✅ BtwBuddy-Setup.exe exists"
-          Get-ChildItem "release/BtwBuddy-Setup.exe" | Format-List
-        } else {
-          Write-Host "❌ BtwBuddy-Setup.exe not found"
-        }
-      shell: pwsh
-
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          release/latest.yml
-          release/BtwBuddy-Setup.exe
-        draft: false
-        prerelease: false
-        generate_release_notes: true
-        body: |
-          ## 🚀 BtwBuddy Release
-          
-          ### 📦 What's included:
-          - **latest.yml**: Auto-updater configuration
-          - **BtwBuddy-Setup.exe**: Windows installer
-          
-          ### 🔧 Installation:
-          1. Download and run `BtwBuddy-Setup.exe`
-          2. Follow the installation wizard
-          3. The app will automatically check for updates
-          
-          ### 📋 Manual Updates:
-          If auto-updates don't work, use the built-in Version Manager:
-          1. Open BtwBuddy
-          2. Go to Settings → Ontwikkelaar Tools → Open Versie Beheer
-          3. Select and download any version manually
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+# GitHub Actions workflow disabled - using manual releases
+# name: Build and Release
+# 
+# on:
+#   push:
+#     tags:
+#       - 'v*'
+# 
+# jobs:
+#   build-and-release:
+#     runs-on: windows-latest
+#     
+#     steps:
+#     - name: Checkout code
+#       uses: actions/checkout@v3
+# 
+#     - name: Setup Node.js
+#       uses: actions/setup-node@v3
+#       with:
+#         node-version: '18'
+#         cache: 'npm'
+# 
+#     - name: Install dependencies
+#       run: npm ci
+# 
+#     - name: Build application
+#       run: npm run build
+# 
+#     - name: Build release files (without publishing)
+#       run: npm run dist:win:no-publish
+# 
+#     - name: Generate latest.yml
+#       run: npm run generate-latest-yml
+# 
+#     - name: List release files
+#       run: |
+#         Write-Host "Checking release directory contents:"
+#         Get-ChildItem -Path "release" -Force
+#         Write-Host "Checking if latest.yml exists:"
+#         if (Test-Path "release/latest.yml") {
+#           Write-Host "✅ latest.yml exists"
+#           Get-Content "release/latest.yml"
+#         } else {
+#           Write-Host "❌ latest.yml not found"
+#         }
+#         Write-Host "Checking if BtwBuddy-Setup.exe exists:"
+#         if (Test-Path "release/BtwBuddy-Setup.exe") {
+#           Write-Host "✅ BtwBuddy-Setup.exe exists"
+#           Get-ChildItem "release/BtwBuddy-Setup.exe" | Format-List
+#         } else {
+#           Write-Host "❌ BtwBuddy-Setup.exe not found"
+#         }
+#       shell: pwsh
+# 
+#     - name: Create Release
+#       uses: softprops/action-gh-release@v1
+#       with:
+#         files: |
+#           release/latest.yml
+#           release/BtwBuddy-Setup.exe
+#         draft: false
+#         prerelease: false
+#         generate_release_notes: true
+#         body: |
+#           ## 🚀 BtwBuddy Release
+#           
+#           ### 📦 What's included:
+#           - **latest.yml**: Auto-updater configuration
+#           - **BtwBuddy-Setup.exe**: Windows installer
+#           
+#           ### 🔧 Installation:
+#           1. Download and run `BtwBuddy-Setup.exe`
+#           2. Follow the installation wizard
+#           3. The app will automatically check for updates
+#           
+#           ### 📋 Manual Updates:
+#           If auto-updates don't work, use the built-in Version Manager:
+#           1. Open BtwBuddy
+#           2. Go to Settings → Ontwikkelaar Tools → Open Versie Beheer
+#           3. Select and download any version manually
+#       env:
+#         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

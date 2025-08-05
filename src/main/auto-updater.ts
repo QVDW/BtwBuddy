@@ -190,39 +190,4 @@ ipcMain.handle('get-app-version', () => {
     version: app.getVersion(),
     name: app.getName()
   }
-})
-
-// New IPC handler to get update logs
-ipcMain.handle('get-update-logs', () => {
-  try {
-    const logDir = path.join(app.getPath('userData'), 'logs')
-    const logFile = path.join(logDir, 'auto-updater.log')
-    
-    if (fs.existsSync(logFile)) {
-      const logs = fs.readFileSync(logFile, 'utf8')
-      return { success: true, logs }
-    } else {
-      return { success: false, error: 'No log file found' }
-    }
-  } catch (error) {
-    logToFile('Failed to read update logs', error)
-    return { success: false, error: `Failed to read logs: ${error}` }
-  }
-})
-
-// New IPC handler to clear update logs
-ipcMain.handle('clear-update-logs', () => {
-  try {
-    const logDir = path.join(app.getPath('userData'), 'logs')
-    const logFile = path.join(logDir, 'auto-updater.log')
-    
-    if (fs.existsSync(logFile)) {
-      fs.unlinkSync(logFile)
-    }
-    
-    return { success: true }
-  } catch (error) {
-    logToFile('Failed to clear update logs', error)
-    return { success: false, error: `Failed to clear logs: ${error}` }
-  }
 }) 
