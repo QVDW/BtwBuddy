@@ -1,5 +1,5 @@
 import { autoUpdater } from 'electron-updater'
-import { app, BrowserWindow, dialog, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -7,8 +7,8 @@ export function initializeAutoUpdater(window: BrowserWindow): void {
   mainWindow = window
   
   // Configure auto updater
-  autoUpdater.autoDownload = true
-  autoUpdater.autoInstallOnAppQuit = true
+  autoUpdater.autoDownload = false // Don't auto-download
+  autoUpdater.autoInstallOnAppQuit = false // Don't auto-install
   
   // Set the feed URL to your GitHub releases
   try {
@@ -19,45 +19,34 @@ export function initializeAutoUpdater(window: BrowserWindow): void {
       private: false
     })
   } catch (error) {
-    sendStatusToWindow('error', `Failed to configure update feed: ${error}`)
+    // Silent fail - don't show error
+    console.error('Failed to configure update feed:', error)
   }
 
-  // Auto updater events
+  // Auto updater events - only send positive updates to renderer
   autoUpdater.on('checking-for-update', () => {
-    sendStatusToWindow('checking-for-update', 'Checking for updates...')
+    // Silent - don't send status
   })
 
   autoUpdater.on('update-available', (info) => {
-    sendStatusToWindow('update-available', 'Update available! Downloading...')
-    
-    // Show notification to user
-    dialog.showMessageBox(mainWindow!, {
-      type: 'info',
-      title: 'Update Available',
-      message: `A new version (${info.version}) is available and will be downloaded automatically.`,
-      detail: 'The update will be installed when you restart the application.',
-      buttons: ['OK']
-    }).catch(error => {
-      console.error('Failed to show update available dialog:', error)
+    // Only send update-available status to trigger notification
+    sendStatusToWindow('update-available', {
+      version: info.version,
+      releaseNotes: info.releaseNotes
     })
   })
 
   autoUpdater.on('update-not-available', (info) => {
-    sendStatusToWindow('update-not-available', 'No updates available')
+    // Silent - don't send status when no updates available
   })
 
   autoUpdater.on('error', (err) => {
-    sendStatusToWindow('error', `Error: ${err.message}`)
-    
-    // Show error dialog to user
-    dialog.showErrorBox('Update Error', 
-      `Failed to check for updates: ${err.message}\n\n` +
-      'This might be due to network issues or GitHub API problems.\n' +
-      'You can try again later or check your internet connection.'
-    )
+    // Silent fail - don't show error dialog or send error status
+    console.error('Auto updater error:', err.message)
   })
 
   autoUpdater.on('download-progress', (progressObj) => {
+    // Only send progress if user initiated download
     sendStatusToWindow('download-progress', {
       speed: progressObj.bytesPerSecond,
       percent: progressObj.percent,
@@ -67,23 +56,8 @@ export function initializeAutoUpdater(window: BrowserWindow): void {
   })
 
   autoUpdater.on('update-downloaded', (info) => {
-    sendStatusToWindow('update-downloaded', 'Update downloaded! Will install on restart.')
-    
-    // Show notification to user
-    dialog.showMessageBox(mainWindow!, {
-      type: 'info',
-      title: 'Update Downloaded',
-      message: `Update ${info.version} has been downloaded successfully.`,
-      detail: 'The update will be installed when you restart the application.',
-      buttons: ['Restart Now', 'Later'],
-      defaultId: 0
-    }).then((result) => {
-      if (result.response === 0) {
-        // User clicked "Restart Now"
-        autoUpdater.quitAndInstall()
-      }
-    }).catch(error => {
-      console.error('Failed to show update downloaded dialog:', error)
+    sendStatusToWindow('update-downloaded', {
+      version: info.version
     })
   })
 
@@ -97,7 +71,8 @@ export function checkForUpdates(): void {
   try {
     autoUpdater.checkForUpdates()
   } catch (error) {
-    sendStatusToWindow('error', `Failed to check for updates: ${error}`)
+    // Silent fail - don't show error
+    console.error('Failed to check for updates:', error)
   }
 }
 
@@ -105,7 +80,8 @@ export function quitAndInstall(): void {
   try {
     autoUpdater.quitAndInstall()
   } catch (error) {
-    sendStatusToWindow('error', `Failed to install update: ${error}`)
+    // Silent fail - don't show error
+    console.error('Failed to install update:', error)
   }
 }
 

@@ -721,41 +721,26 @@ ipcMain.handle('download-version', async (event, versionInfo) => {
   try {
     const { version, downloadUrl, fileName, fileSize } = versionInfo
     
-    // Show confirmation dialog
-    const result = await dialog.showMessageBox(mainWindow!, {
-      type: 'question',
-      title: 'Versie Downloaden',
-      message: `Weet je zeker dat je versie ${version} wilt downloaden en installeren?`,
-      detail: `Bestand: ${fileName}\nGrootte: ${(fileSize / 1024 / 1024).toFixed(2)} MB\n\nDe applicatie zal automatisch opnieuw opstarten na de installatie.`,
-      buttons: ['Downloaden', 'Annuleren'],
-      defaultId: 0,
-      cancelId: 1
+    // Download and install the version silently
+    const autoUpdater = require('electron-updater').autoUpdater
+    
+    // Set the specific version URL
+    autoUpdater.setFeedURL({
+      provider: 'github',
+      owner: 'QVDW',
+      repo: 'BtwBuddy',
+      private: false,
+      url: downloadUrl
     })
     
-    if (result.response === 0) {
-      // User confirmed download
-      
-      // Download and install the version
-      const autoUpdater = require('electron-updater').autoUpdater
-      
-      // Set the specific version URL
-      autoUpdater.setFeedURL({
-        provider: 'github',
-        owner: 'QVDW',
-        repo: 'BtwBuddy',
-        private: false,
-        url: downloadUrl
-      })
-      
-      // Trigger the download and install
-      autoUpdater.downloadUpdate()
-      
-      return { success: true, message: 'Download gestart' }
-    } else {
-      return { success: false, message: 'Download geannuleerd' }
-    }
+    // Trigger the download and install
+    autoUpdater.downloadUpdate()
+    
+    return { success: true, message: 'Download gestart' }
   } catch (error) {
-    return { success: false, error: `Download mislukt: ${error}` }
+    // Silent fail - don't show error
+    console.error('Download failed:', error)
+    return { success: false, error: 'Download mislukt' }
   }
 })
 

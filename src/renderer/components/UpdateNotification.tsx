@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Download, CheckCircle, AlertCircle, RefreshCw, X } from 'lucide-react'
+import { Download, CheckCircle, RefreshCw, X, ChevronDown, ChevronUp } from 'lucide-react'
 
 interface UpdateStatus {
   type: string
@@ -14,6 +14,7 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus | null>(null)
   const [isVisible, setIsVisible] = useState(false)
   const [appVersion, setAppVersion] = useState<string>('')
+  const [isExpanded, setIsExpanded] = useState(false)
 
   useEffect(() => {
     // Get app version
@@ -25,8 +26,8 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
     window.electronAPI.onAutoUpdaterStatus((status: UpdateStatus) => {
       setUpdateStatus(status)
       
-      // Show notification for certain status types
-      if (['update-available', 'update-downloaded', 'error'].includes(status.type)) {
+      // Only show notification for update-available
+      if (status.type === 'update-available') {
         setIsVisible(true)
       }
     })
@@ -40,18 +41,18 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
     window.electronAPI.quitAndInstall()
   }
 
+  const toggleExpansion = () => {
+    setIsExpanded(!isExpanded)
+  }
+
   const getStatusIcon = () => {
     switch (updateStatus?.type) {
       case 'update-available':
         return <Download className="status-icon" />
       case 'update-downloaded':
         return <CheckCircle className="status-icon" />
-      case 'error':
-        return <AlertCircle className="status-icon" />
-      case 'checking-for-update':
-        return <RefreshCw className="status-icon spinning" />
       default:
-        return <CheckCircle className="status-icon" />
+        return <Download className="status-icon" />
     }
   }
 
@@ -61,14 +62,8 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
         return 'Nieuwe update beschikbaar!'
       case 'update-downloaded':
         return 'Update gedownload! Klik om te installeren.'
-      case 'error':
-        return 'Fout bij het controleren van updates'
-      case 'checking-for-update':
-        return 'Controleren voor updates...'
-      case 'update-not-available':
-        return 'Geen updates beschikbaar'
       default:
-        return 'Update status onbekend'
+        return 'Update beschikbaar'
     }
   }
 
@@ -78,12 +73,8 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
         return 'blue'
       case 'update-downloaded':
         return 'green'
-      case 'error':
-        return 'red'
-      case 'checking-for-update':
-        return 'yellow'
       default:
-        return 'gray'
+        return 'blue'
     }
   }
 
@@ -91,7 +82,12 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
     return updateStatus?.type === 'update-downloaded'
   }
 
-  if (!isVisible && !updateStatus) {
+  const shouldShowExpandButton = () => {
+    return updateStatus?.type === 'update-available'
+  }
+
+  // Only render if there's an update available and notification should be visible
+  if (!isVisible || !updateStatus || updateStatus.type !== 'update-available') {
     return null
   }
 
@@ -108,9 +104,6 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
             {updateStatus?.type === 'update-available' && updateStatus.data?.version && (
               <span> • Nieuwe versie: {updateStatus.data.version}</span>
             )}
-            {updateStatus?.type === 'download-progress' && updateStatus.data && (
-              <span> • {Math.round(updateStatus.data.percent)}% gedownload</span>
-            )}
           </div>
         </div>
         <div className="update-actions">
@@ -120,6 +113,14 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
               onClick={handleQuitAndInstall}
             >
               Nu Installeren
+            </button>
+          )}
+          {shouldShowExpandButton() && (
+            <button 
+              className="expand-button"
+              onClick={toggleExpansion}
+            >
+              {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
           )}
           <button 
@@ -136,6 +137,26 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
           </button>
         </div>
       </div>
+      
+      {isExpanded && updateStatus?.type === 'update-available' && (
+        <div className="update-expanded-content">
+          <div className="update-description">
+            {updateStatus.data?.releaseNotes || 'Nieuwe versie beschikbaar voor download.'}
+          </div>
+          <div className="update-actions-expanded">
+            <button 
+              className="download-button"
+              onClick={() => {
+                // Trigger download
+                window.electronAPI.checkForUpdates()
+              }}
+            >
+              <Download size={16} />
+              Download Update
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 } 
