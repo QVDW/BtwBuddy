@@ -40,8 +40,13 @@ try {
 
   // Build release files
   console.log('\n📦 Building release files...');
-  execSync('npm run dist:win', { stdio: 'inherit' });
+  execSync('npm run dist:win:no-publish', { stdio: 'inherit' });
   console.log('✅ Release files built');
+
+  // Generate latest.yml manually
+  console.log('\n📄 Generating latest.yml...');
+  execSync('npm run generate-latest-yml', { stdio: 'inherit' });
+  console.log('✅ latest.yml generated');
 
   // Check if release files exist
   const releaseDir = 'release';

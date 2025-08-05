@@ -18,6 +18,7 @@
     "copy-splash": "node -e \"require('fs').copyFileSync('src/renderer/splash.html', 'dist/renderer/splash.html')\"",
     "dist": "npm run build && electron-builder",
     "dist:win": "npm run build && electron-builder --win",
+    "dist:win:no-publish": "npm run build && electron-builder --win --publish never",
     "dist:mac": "npm run build && electron-builder --mac",
     "dist:linux": "npm run build && electron-builder --linux",
     "preview": "npm run build && electron .",
@@ -27,9 +28,7 @@
     "clean": "rimraf dist build release",
     "prebuild": "npm run clean",
     "release": "node scripts/release.js",
-    "test:updater": "node scripts/test-updater.js",
-    "fix-release": "node scripts/fix-release.js",
-    "fix-github-release": "node scripts/fix-github-release.js"
+    "generate-latest-yml": "node scripts/generate-latest-yml.js"
   },
   "dependencies": {
     "electron-store": "^8.1.0",
@@ -79,7 +78,9 @@
     "publish": {
       "provider": "github",
       "owner": "QVDW",
-      "repo": "BtwBuddy"
+      "repo": "BtwBuddy",
+      "private": false,
+      "publishAutoUpdate": false
     },
     "win": {
       "target": [

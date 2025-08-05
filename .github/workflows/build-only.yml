@@ -1,0 +1,76 @@
+name: Build Only
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build application
+      run: npm run build
+
+    - name: Build release files (no publish)
+      run: npm run dist:win:no-publish
+
+    - name: Generate latest.yml
+      run: npm run generate-latest-yml
+
+    - name: Verify and list files
+      run: |
+        Write-Host "=== Build Complete ==="
+        Write-Host "Release directory contents:"
+        Get-ChildItem -Path "release" -Force | Format-Table Name, Length, LastWriteTime
+        
+        Write-Host "`nChecking latest.yml:"
+        if (Test-Path "release/latest.yml") {
+          Write-Host "✅ latest.yml exists"
+          $content = Get-Content "release/latest.yml" -Raw
+          Write-Host "Content preview:"
+          Write-Host $content.Substring(0, [Math]::Min(200, $content.Length))
+        } else {
+          Write-Host "❌ latest.yml not found"
+        }
+        
+        Write-Host "`nChecking BtwBuddy-Setup.exe:"
+        if (Test-Path "release/BtwBuddy-Setup.exe") {
+          $file = Get-ChildItem "release/BtwBuddy-Setup.exe"
+          Write-Host "✅ BtwBuddy-Setup.exe exists"
+          Write-Host "Size: $([math]::Round($file.Length / 1MB, 2)) MB"
+          Write-Host "Modified: $($file.LastWriteTime)"
+        } else {
+          Write-Host "❌ BtwBuddy-Setup.exe not found"
+        }
+        
+        Write-Host "`n📋 Manual Upload Instructions:"
+        Write-Host "1. Go to https://github.com/QVDW/BtwBuddy/releases"
+        Write-Host "2. Click 'Edit' on the latest release"
+        Write-Host "3. Upload these files from the release/ directory:"
+        Write-Host "   - latest.yml"
+        Write-Host "   - BtwBuddy-Setup.exe"
+        Write-Host "4. Click 'Update release'"
+      shell: pwsh
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: release-files
+        path: |
+          release/latest.yml
+          release/BtwBuddy-Setup.exe
+        retention-days: 30 
