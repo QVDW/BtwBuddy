@@ -28,6 +28,9 @@ jobs:
     - name: Build release files (no publish)
       run: npm run dist:win:no-publish
 
+    - name: Generate latest.yml
+      run: npm run generate-latest-yml
+
     - name: Verify release files
       run: |
         Write-Host "=== Release Files Verification ==="

@@ -28,6 +28,9 @@ jobs:
     - name: Build release files (without publishing)
       run: npm run dist:win:no-publish
 
+    - name: Generate latest.yml
+      run: npm run generate-latest-yml
+
     - name: List release files
       run: |
         Write-Host "Checking release directory contents:"
