@@ -87,15 +87,7 @@ Users will see:
 2. **Download fails**: Check your internet connection
 3. **Installation fails**: Make sure the app has write permissions
 
-### Debug Mode
 
-To see detailed logs, run the app in development mode:
-
-```bash
-npm run dev
-```
-
-The console will show update check progress and any errors.
 
 ## Security Notes
 

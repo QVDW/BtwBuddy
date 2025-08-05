@@ -65,7 +65,7 @@ function createWindow(): void {
   // Load the app
   if (process.env.NODE_ENV === 'development') {
     mainWindow.loadURL('http://localhost:3000')
-    mainWindow.webContents.openDevTools() // Enable dev tools for debugging
+
   } else {
     mainWindow.loadFile(path.join(__dirname, 'renderer/index.html'))
   }
@@ -734,7 +734,6 @@ ipcMain.handle('download-version', async (event, versionInfo) => {
     
     if (result.response === 0) {
       // User confirmed download
-      logToFile(`User confirmed download of version ${version}`)
       
       // Download and install the version
       const autoUpdater = require('electron-updater').autoUpdater
@@ -756,29 +755,7 @@ ipcMain.handle('download-version', async (event, versionInfo) => {
       return { success: false, message: 'Download geannuleerd' }
     }
   } catch (error) {
-    logToFile(`Error downloading version: ${error}`)
     return { success: false, error: `Download mislukt: ${error}` }
   }
 })
 
-// Helper function for logging (if not already defined)
-function logToFile(message: string, data?: any) {
-  const logDir = path.join(app.getPath('userData'), 'logs')
-  const logFile = path.join(logDir, 'version-manager.log')
-  
-  // Create logs directory if it doesn't exist
-  if (!fs.existsSync(logDir)) {
-    fs.mkdirSync(logDir, { recursive: true })
-  }
-  
-  const timestamp = new Date().toISOString()
-  const logEntry = `[${timestamp}] ${message}${data ? ` | Data: ${JSON.stringify(data)}` : ''}\n`
-  
-  try {
-    fs.appendFileSync(logFile, logEntry)
-  } catch (error) {
-    console.error('Failed to write to log file:', error)
-  }
-  
-  console.log(`[Version-Manager] ${message}`, data || '')
-}
