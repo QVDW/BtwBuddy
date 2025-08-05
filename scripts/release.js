@@ -38,6 +38,28 @@ try {
   execSync('npm run build', { stdio: 'inherit' });
   console.log('✅ Build completed');
 
+  // Build release files
+  console.log('\n📦 Building release files...');
+  execSync('npm run dist:win', { stdio: 'inherit' });
+  console.log('✅ Release files built');
+
+  // Check if release files exist
+  const releaseDir = 'release';
+  const latestYmlPath = path.join(releaseDir, 'latest.yml');
+  const setupExePath = path.join(releaseDir, 'BtwBuddy-Setup.exe');
+
+  if (!fs.existsSync(latestYmlPath)) {
+    console.error('❌ latest.yml not found in release directory');
+    process.exit(1);
+  }
+
+  if (!fs.existsSync(setupExePath)) {
+    console.error('❌ BtwBuddy-Setup.exe not found in release directory');
+    process.exit(1);
+  }
+
+  console.log('✅ Release files verified');
+
   // Create git tag
   console.log('\n🏷️  Creating git tag...');
   execSync(`git add .`, { stdio: 'inherit' });
@@ -52,11 +74,22 @@ try {
   console.log('✅ Changes pushed to GitHub');
 
   console.log(`\n🎉 Release v${newVersion} is ready!`);
-  console.log('\nThe GitHub Actions workflow will automatically:');
-  console.log('- Build the app for Windows, macOS, and Linux');
-  console.log('- Create a new release on GitHub');
-  console.log('- Upload the installers');
-  console.log('\nUsers will receive automatic updates when they restart the app.');
+  console.log('\n📋 IMPORTANT: Manual Steps Required:');
+  console.log('1. Go to https://github.com/QVDW/BtwBuddy/releases');
+  console.log('2. Click "Edit" on the v' + newVersion + ' release');
+  console.log('3. Upload these files from the release/ directory:');
+  console.log('   - latest.yml');
+  console.log('   - BtwBuddy-Setup.exe');
+  console.log('4. Click "Update release"');
+  console.log('\n✅ After uploading, users will receive automatic updates!');
+
+  // Show file sizes
+  const latestYmlStats = fs.statSync(latestYmlPath);
+  const setupExeStats = fs.statSync(setupExePath);
+  
+  console.log('\n📊 Release Files:');
+  console.log(`   latest.yml: ${(latestYmlStats.size / 1024).toFixed(2)} KB`);
+  console.log(`   BtwBuddy-Setup.exe: ${(setupExeStats.size / 1024 / 1024).toFixed(2)} MB`);
 
 } catch (error) {
   console.error('\n❌ Release failed:', error.message);
