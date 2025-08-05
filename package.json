@@ -1,6 +1,6 @@
 {
   "name": "btwbuddy",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Een moderne, gebruiksvriendelijke desktop applicatie voor zelfstandigen en kleine ondernemers om hun boekhouding en BTW beheer eenvoudig bij te houden.",
   "main": "dist/main.js",
   "homepage": "https://github.com/QVDW/BtwBuddy#readme",
