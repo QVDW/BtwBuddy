@@ -1,0 +1,54 @@
+name: Build and Release (Fallback)
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build application
+      run: npm run build
+
+    - name: Build and publish release
+      uses: samuelmeuli/action-electron-builder@v1
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        release: ${{ startsWith(github.ref, 'refs/tags/') }}
+        publish: always
+
+    - name: Upload release assets manually
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        Write-Host "Uploading additional files to release..."
+        $tag = $env:GITHUB_REF -replace 'refs/tags/', ''
+        Write-Host "Release tag: $tag"
+        
+        # Check if files exist
+        if (Test-Path "release/latest.yml") {
+          Write-Host "✅ latest.yml found"
+        } else {
+          Write-Host "❌ latest.yml not found"
+        }
+        
+        if (Test-Path "release/BtwBuddy-Setup.exe") {
+          Write-Host "✅ BtwBuddy-Setup.exe found"
+        } else {
+          Write-Host "❌ BtwBuddy-Setup.exe not found"
+        }
+      shell: pwsh 
