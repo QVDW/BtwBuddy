@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
-import { Settings as SettingsIcon, Play, Download, Upload, Trash2, Info, HelpCircle, Bug, Package } from 'lucide-react'
-import { UpdateDebugger } from './UpdateDebugger'
+import { Settings as SettingsIcon, Play, Download, Upload, Trash2, Info, HelpCircle, Package } from 'lucide-react'
 import { VersionManager } from './VersionManager'
 import './Settings.scss'
 
@@ -23,7 +22,6 @@ export const Settings: React.FC<SettingsProps> = ({
   onImportData,
   onClearData
 }) => {
-  const [showUpdateDebugger, setShowUpdateDebugger] = useState(false)
   const [showVersionManager, setShowVersionManager] = useState(false)
 
   if (!isVisible) return null
@@ -139,23 +137,7 @@ export const Settings: React.FC<SettingsProps> = ({
             <div className="settings-section">
               <h3>Ontwikkelaar Tools</h3>
               
-              <div className="setting-item">
-                <div className="setting-info">
-                  <div className="setting-icon">
-                    <Bug size={20} />
-                  </div>
-                  <div className="setting-text">
-                    <h4>Update Debugger</h4>
-                    <p>Debug en test de auto-updater functionaliteit</p>
-                  </div>
-                </div>
-                <button 
-                  className="btn-secondary" 
-                  onClick={() => setShowUpdateDebugger(true)}
-                >
-                  Open Debugger
-                </button>
-              </div>
+
 
               <div className="setting-item">
                 <div className="setting-info">
@@ -206,10 +188,6 @@ export const Settings: React.FC<SettingsProps> = ({
           </div>
         </div>
       </div>
-
-      {showUpdateDebugger && (
-        <UpdateDebugger onClose={() => setShowUpdateDebugger(false)} />
-      )}
 
       {showVersionManager && (
         <VersionManager onClose={() => setShowVersionManager(false)} />

@@ -48,7 +48,6 @@ function App() {
       setSelectedMonth({ year: now.getFullYear(), month: now.getMonth() + 1 })
     } catch (err) {
       setError('Fout bij het laden van transacties')
-      console.error('Error loading transactions:', err)
     } finally {
       setIsLoading(false)
     }
@@ -62,7 +61,6 @@ function App() {
       setEditingTransaction(null)
     } catch (err) {
       setError('Fout bij het opslaan van transactie')
-      console.error('Error saving transaction:', err)
     }
   }
 
@@ -74,7 +72,6 @@ function App() {
       setEditingTransaction(null)
     } catch (err) {
       setError('Fout bij het bijwerken van transactie')
-      console.error('Error updating transaction:', err)
     }
   }
 
@@ -86,7 +83,6 @@ function App() {
       setTransactions(prev => prev.filter(t => t.id !== transactionId))
     } catch (err) {
       setError('Fout bij het verwijderen van transactie')
-      console.error('Error deleting transaction:', err)
     }
   }
 
@@ -133,7 +129,6 @@ function App() {
       }
     } catch (err) {
       setError('Fout bij het exporteren')
-      console.error('Error exporting:', err)
     }
   }
 
@@ -199,7 +194,6 @@ function App() {
       alert('Alle gegevens succesvol geëxporteerd')
     } catch (err) {
       setError('Fout bij het exporteren van alle gegevens')
-      console.error('Error exporting all data:', err)
     }
   }
 
@@ -232,7 +226,6 @@ function App() {
       input.click()
     } catch (err) {
       setError('Fout bij het importeren van gegevens')
-      console.error('Error importing data:', err)
     }
   }
 
@@ -250,7 +243,6 @@ function App() {
       alert('Alle gegevens zijn permanent gewist van je PC')
     } catch (err) {
       setError('Fout bij het wissen van gegevens')
-      console.error('Error clearing data:', err)
     }
   }
 

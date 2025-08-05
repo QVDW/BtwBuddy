@@ -27,7 +27,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('auto-updater-status', (event, status) => callback(status))
   },
   
-  // Update logging and debugging
+
   getUpdateLogs: () => ipcRenderer.invoke('get-update-logs'),
   clearUpdateLogs: () => ipcRenderer.invoke('clear-update-logs'),
   

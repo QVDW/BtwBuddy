@@ -65,7 +65,6 @@ function createWindow(): void {
   // Load the app
   if (process.env.NODE_ENV === 'development') {
     mainWindow.loadURL('http://localhost:3000')
-    mainWindow.webContents.openDevTools() // Enable dev tools for debugging
   } else {
     mainWindow.loadFile(path.join(__dirname, 'renderer/index.html'))
   }
@@ -777,8 +776,6 @@ function logToFile(message: string, data?: any) {
   try {
     fs.appendFileSync(logFile, logEntry)
   } catch (error) {
-    console.error('Failed to write to log file:', error)
+    // Handle error silently
   }
-  
-  console.log(`[Version-Manager] ${message}`, data || '')
 }

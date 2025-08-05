@@ -93,7 +93,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
   const openInvoiceFile = (transaction: Transaction) => {
     if (transaction.invoiceFile) {
       // In a real app, you might want to open the file with the default application
-      console.log('Opening file:', transaction.invoiceFile.storedPath)
+  
     }
   }
 

@@ -59,7 +59,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
 
 
   const handleInputChange = (field: string, value: any) => {
-    console.log('handleInputChange called:', field, value) // Debug log
+
     setFormData(prev => ({ ...prev, [field]: value }))
     
     // Clear errors when user starts typing
@@ -105,7 +105,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         setFormData(prev => ({ ...prev, invoiceFile: fileData }))
       }
     } catch (error) {
-      console.error('Error uploading file:', error)
+      // Handle error silently
     } finally {
       setIsUploading(false)
     }

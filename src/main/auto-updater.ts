@@ -21,11 +21,8 @@ function logToFile(message: string, data?: any) {
   try {
     fs.appendFileSync(logFile, logEntry)
   } catch (error) {
-    console.error('Failed to write to log file:', error)
+    // Handle error silently
   }
-  
-  // Also log to console for development
-  console.log(`[Auto-Updater] ${message}`, data || '')
 }
 
 export function initializeAutoUpdater(window: BrowserWindow): void {
@@ -37,13 +34,7 @@ export function initializeAutoUpdater(window: BrowserWindow): void {
   autoUpdater.autoDownload = true
   autoUpdater.autoInstallOnAppQuit = true
   
-  // Enable detailed logging for debugging
-  autoUpdater.logger = {
-    info: (message: string) => logToFile('INFO', message),
-    warn: (message: string) => logToFile('WARN', message),
-    error: (message: string) => logToFile('ERROR', message),
-    debug: (message: string) => logToFile('DEBUG', message)
-  }
+
   
   // Set the feed URL to your GitHub releases
   try {
