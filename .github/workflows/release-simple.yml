@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build and Release (Simple)
 
 on:
   push:
@@ -25,24 +25,31 @@ jobs:
     - name: Build application
       run: npm run build
 
-    - name: Build release files (without publishing)
+    - name: Build release files (no publish)
       run: npm run dist:win:no-publish
 
-    - name: List release files
+    - name: Verify release files
       run: |
-        Write-Host "Checking release directory contents:"
-        Get-ChildItem -Path "release" -Force
-        Write-Host "Checking if latest.yml exists:"
+        Write-Host "=== Release Files Verification ==="
+        Write-Host "Release directory contents:"
+        Get-ChildItem -Path "release" -Force | Format-Table Name, Length, LastWriteTime
+        
+        Write-Host "`nChecking latest.yml:"
         if (Test-Path "release/latest.yml") {
           Write-Host "✅ latest.yml exists"
-          Get-Content "release/latest.yml"
+          $content = Get-Content "release/latest.yml" -Raw
+          Write-Host "Content preview:"
+          Write-Host $content.Substring(0, [Math]::Min(200, $content.Length))
         } else {
           Write-Host "❌ latest.yml not found"
         }
-        Write-Host "Checking if BtwBuddy-Setup.exe exists:"
+        
+        Write-Host "`nChecking BtwBuddy-Setup.exe:"
         if (Test-Path "release/BtwBuddy-Setup.exe") {
+          $file = Get-ChildItem "release/BtwBuddy-Setup.exe"
           Write-Host "✅ BtwBuddy-Setup.exe exists"
-          Get-ChildItem "release/BtwBuddy-Setup.exe" | Format-List
+          Write-Host "Size: $([math]::Round($file.Length / 1MB, 2)) MB"
+          Write-Host "Modified: $($file.LastWriteTime)"
         } else {
           Write-Host "❌ BtwBuddy-Setup.exe not found"
         }
@@ -74,5 +81,10 @@ jobs:
           1. Open BtwBuddy
           2. Go to Settings → Ontwikkelaar Tools → Open Versie Beheer
           3. Select and download any version manually
+          
+          ### 🔍 Troubleshooting:
+          - If auto-updater fails, use the Version Manager
+          - Check logs in `%APPDATA%/BtwBuddy/logs/`
+          - Manual downloads available via Version Manager
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
