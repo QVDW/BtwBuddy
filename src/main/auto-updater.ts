@@ -1,32 +1,72 @@
 import { autoUpdater } from 'electron-updater'
 import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import * as path from 'path'
+import * as fs from 'fs'
 
 let mainWindow: BrowserWindow | null = null
+
+// Enhanced logging function
+function logToFile(message: string, data?: any) {
+  const logDir = path.join(app.getPath('userData'), 'logs')
+  const logFile = path.join(logDir, 'auto-updater.log')
+  
+  // Create logs directory if it doesn't exist
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true })
+  }
+  
+  const timestamp = new Date().toISOString()
+  const logEntry = `[${timestamp}] ${message}${data ? ` | Data: ${JSON.stringify(data)}` : ''}\n`
+  
+  try {
+    fs.appendFileSync(logFile, logEntry)
+  } catch (error) {
+    console.error('Failed to write to log file:', error)
+  }
+  
+  // Also log to console for development
+  console.log(`[Auto-Updater] ${message}`, data || '')
+}
 
 export function initializeAutoUpdater(window: BrowserWindow): void {
   mainWindow = window
   
-  // Configure auto updater
+  logToFile('Initializing auto updater')
+  
+  // Configure auto updater with enhanced error handling
   autoUpdater.autoDownload = true
   autoUpdater.autoInstallOnAppQuit = true
   
+  // Enable detailed logging for debugging
+  autoUpdater.logger = {
+    info: (message: string) => logToFile('INFO', message),
+    warn: (message: string) => logToFile('WARN', message),
+    error: (message: string) => logToFile('ERROR', message),
+    debug: (message: string) => logToFile('DEBUG', message)
+  }
+  
   // Set the feed URL to your GitHub releases
-  autoUpdater.setFeedURL({
-    provider: 'github',
-    owner: 'QVDW',
-    repo: 'BtwBuddy',
-    private: false
-  })
+  try {
+    autoUpdater.setFeedURL({
+      provider: 'github',
+      owner: 'QVDW',
+      repo: 'BtwBuddy',
+      private: false
+    })
+    logToFile('Feed URL set successfully')
+  } catch (error) {
+    logToFile('Failed to set feed URL', error)
+    sendStatusToWindow('error', `Failed to configure update feed: ${error}`)
+  }
 
-  // Auto updater events
+  // Auto updater events with enhanced error handling
   autoUpdater.on('checking-for-update', () => {
-    console.log('Checking for updates...')
+    logToFile('Checking for updates...')
     sendStatusToWindow('checking-for-update', 'Checking for updates...')
   })
 
   autoUpdater.on('update-available', (info) => {
-    console.log('Update available:', info)
+    logToFile('Update available', info)
     sendStatusToWindow('update-available', 'Update available! Downloading...')
     
     // Show notification to user
@@ -36,22 +76,36 @@ export function initializeAutoUpdater(window: BrowserWindow): void {
       message: `A new version (${info.version}) is available and will be downloaded automatically.`,
       detail: 'The update will be installed when you restart the application.',
       buttons: ['OK']
+    }).catch(error => {
+      logToFile('Failed to show update available dialog', error)
     })
   })
 
   autoUpdater.on('update-not-available', (info) => {
-    console.log('Update not available:', info)
+    logToFile('Update not available', info)
     sendStatusToWindow('update-not-available', 'No updates available')
   })
 
   autoUpdater.on('error', (err) => {
-    console.error('Auto updater error:', err)
+    logToFile('Auto updater error', {
+      message: err.message,
+      stack: err.stack,
+      code: (err as any).code,
+      name: err.name
+    })
     sendStatusToWindow('error', `Error: ${err.message}`)
+    
+    // Show error dialog to user
+    dialog.showErrorBox('Update Error', 
+      `Failed to check for updates: ${err.message}\n\n` +
+      'This might be due to network issues or GitHub API problems.\n' +
+      'You can try again later or check your internet connection.'
+    )
   })
 
   autoUpdater.on('download-progress', (progressObj) => {
     const logMessage = `Download speed: ${progressObj.bytesPerSecond} - Downloaded ${progressObj.percent}% (${progressObj.transferred}/${progressObj.total})`
-    console.log(logMessage)
+    logToFile('Download progress', progressObj)
     sendStatusToWindow('download-progress', {
       speed: progressObj.bytesPerSecond,
       percent: progressObj.percent,
@@ -61,7 +115,7 @@ export function initializeAutoUpdater(window: BrowserWindow): void {
   })
 
   autoUpdater.on('update-downloaded', (info) => {
-    console.log('Update downloaded:', info)
+    logToFile('Update downloaded', info)
     sendStatusToWindow('update-downloaded', 'Update downloaded! Will install on restart.')
     
     // Show notification to user
@@ -75,8 +129,11 @@ export function initializeAutoUpdater(window: BrowserWindow): void {
     }).then((result) => {
       if (result.response === 0) {
         // User clicked "Restart Now"
+        logToFile('User chose to restart now')
         autoUpdater.quitAndInstall()
       }
+    }).catch(error => {
+      logToFile('Failed to show update downloaded dialog', error)
     })
   })
 
@@ -87,17 +144,32 @@ export function initializeAutoUpdater(window: BrowserWindow): void {
 }
 
 export function checkForUpdates(): void {
-  console.log('Checking for updates...')
-  autoUpdater.checkForUpdates()
+  logToFile('Manual check for updates initiated')
+  try {
+    autoUpdater.checkForUpdates()
+  } catch (error) {
+    logToFile('Failed to check for updates', error)
+    sendStatusToWindow('error', `Failed to check for updates: ${error}`)
+  }
 }
 
 export function quitAndInstall(): void {
-  autoUpdater.quitAndInstall()
+  logToFile('Quit and install initiated')
+  try {
+    autoUpdater.quitAndInstall()
+  } catch (error) {
+    logToFile('Failed to quit and install', error)
+    sendStatusToWindow('error', `Failed to install update: ${error}`)
+  }
 }
 
 function sendStatusToWindow(type: string, data: any): void {
   if (mainWindow) {
-    mainWindow.webContents.send('auto-updater-status', { type, data })
+    try {
+      mainWindow.webContents.send('auto-updater-status', { type, data })
+    } catch (error) {
+      logToFile('Failed to send status to window', error)
+    }
   }
 }
 
@@ -117,5 +189,40 @@ ipcMain.handle('get-app-version', () => {
   return {
     version: app.getVersion(),
     name: app.getName()
+  }
+})
+
+// New IPC handler to get update logs
+ipcMain.handle('get-update-logs', () => {
+  try {
+    const logDir = path.join(app.getPath('userData'), 'logs')
+    const logFile = path.join(logDir, 'auto-updater.log')
+    
+    if (fs.existsSync(logFile)) {
+      const logs = fs.readFileSync(logFile, 'utf8')
+      return { success: true, logs }
+    } else {
+      return { success: false, error: 'No log file found' }
+    }
+  } catch (error) {
+    logToFile('Failed to read update logs', error)
+    return { success: false, error: `Failed to read logs: ${error}` }
+  }
+})
+
+// New IPC handler to clear update logs
+ipcMain.handle('clear-update-logs', () => {
+  try {
+    const logDir = path.join(app.getPath('userData'), 'logs')
+    const logFile = path.join(logDir, 'auto-updater.log')
+    
+    if (fs.existsSync(logFile)) {
+      fs.unlinkSync(logFile)
+    }
+    
+    return { success: true }
+  } catch (error) {
+    logToFile('Failed to clear update logs', error)
+    return { success: false, error: `Failed to clear logs: ${error}` }
   }
 }) 

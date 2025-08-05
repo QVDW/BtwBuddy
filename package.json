@@ -26,7 +26,9 @@
     "type-check": "tsc --noEmit",
     "clean": "rimraf dist build release",
     "prebuild": "npm run clean",
-    "release": "node scripts/release.js"
+    "release": "node scripts/release.js",
+    "test:updater": "node scripts/test-updater.js",
+    "fix-release": "node scripts/fix-release.js"
   },
   "dependencies": {
     "electron-store": "^8.1.0",
