@@ -166,6 +166,41 @@ ipcMain.handle('delete-transaction', (event, transactionId) => {
   return true
 })
 
+// Autofill handlers
+ipcMain.handle('get-autofill-items', () => {
+  return store.get('autofill-items', [])
+})
+
+ipcMain.handle('save-autofill-item', (event, autofillItem) => {
+  const autofillItems = store.get('autofill-items', []) as any[]
+  const newAutofillItem = {
+    ...autofillItem,
+    id: Date.now().toString(),
+    createdAt: new Date().toISOString()
+  }
+  autofillItems.push(newAutofillItem)
+  store.set('autofill-items', autofillItems)
+  return newAutofillItem
+})
+
+ipcMain.handle('update-autofill-item', (event, autofillItem) => {
+  const autofillItems = store.get('autofill-items', []) as any[]
+  const index = autofillItems.findIndex(item => item.id === autofillItem.id)
+  if (index !== -1) {
+    autofillItems[index] = { ...autofillItems[index], ...autofillItem }
+    store.set('autofill-items', autofillItems)
+    return autofillItems[index]
+  }
+  return null
+})
+
+ipcMain.handle('delete-autofill-item', (event, autofillItemId) => {
+  const autofillItems = store.get('autofill-items', []) as any[]
+  const filteredAutofillItems = autofillItems.filter(item => item.id !== autofillItemId)
+  store.set('autofill-items', filteredAutofillItems)
+  return true
+})
+
 ipcMain.handle('clear-all-data', () => {
   // Clear all data from electron-store
   store.clear()

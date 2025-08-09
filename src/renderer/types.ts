@@ -11,6 +11,17 @@ export interface Transaction {
   createdAt: string
 }
 
+export interface AutofillItem {
+  id: string
+  description: string
+  type: 'income' | 'expense'
+  amountInclusive?: number
+  amountExclusive?: number
+  vatAmount?: number
+  vatPercentage: number
+  createdAt: string
+}
+
 export interface InvoiceFile {
   originalName: string
   storedPath: string

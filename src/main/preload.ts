@@ -10,6 +10,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteTransaction: (transactionId: string) => ipcRenderer.invoke('delete-transaction', transactionId),
   clearAllData: () => ipcRenderer.invoke('clear-all-data'),
   
+  // Autofill management
+  getAutofillItems: () => ipcRenderer.invoke('get-autofill-items'),
+  saveAutofillItem: (autofillItem: any) => ipcRenderer.invoke('save-autofill-item', autofillItem),
+  updateAutofillItem: (autofillItem: any) => ipcRenderer.invoke('update-autofill-item', autofillItem),
+  deleteAutofillItem: (autofillItemId: string) => ipcRenderer.invoke('delete-autofill-item', autofillItemId),
+  
   // File handling
   selectFile: () => ipcRenderer.invoke('select-file'),
   exportMonth: (data: any) => ipcRenderer.invoke('export-month', data),
@@ -42,6 +48,10 @@ declare global {
       updateTransaction: (transaction: any) => Promise<any>
       deleteTransaction: (transactionId: string) => Promise<boolean>
       clearAllData: () => Promise<boolean>
+      getAutofillItems: () => Promise<any[]>
+      saveAutofillItem: (autofillItem: any) => Promise<any>
+      updateAutofillItem: (autofillItem: any) => Promise<any>
+      deleteAutofillItem: (autofillItemId: string) => Promise<boolean>
       selectFile: () => Promise<any>
       exportMonth: (data: any) => Promise<any>
       minimizeWindow: () => Promise<void>

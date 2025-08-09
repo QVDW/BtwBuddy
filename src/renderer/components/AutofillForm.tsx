@@ -1,53 +1,29 @@
 import React, { useState, useEffect } from 'react'
-import DatePicker from 'react-datepicker'
-import 'react-datepicker/dist/react-datepicker.css'
-import { Upload, X } from 'lucide-react'
-import { Transaction, FormErrors } from '../types'
+import { AutofillItem, FormErrors } from '../types'
 import { calculateFromInclusive, calculateFromExclusive, validateTransaction } from '../utils/calculations'
 
-interface TransactionFormProps {
-  onSubmit: (transaction: Omit<Transaction, 'id' | 'createdAt'>) => void
+interface AutofillFormProps {
+  onSubmit: (autofillItem: Omit<AutofillItem, 'id' | 'createdAt'>) => void
   onCancel: () => void
-  transaction?: Transaction | null
-  autofillData?: Omit<Transaction, 'id' | 'createdAt'> | null
+  autofillItem?: AutofillItem | null
 }
 
-export const TransactionForm: React.FC<TransactionFormProps> = ({
+export const AutofillForm: React.FC<AutofillFormProps> = ({
   onSubmit,
   onCancel,
-  transaction,
-  autofillData
+  autofillItem
 }) => {
   const [formData, setFormData] = useState({
-    date: transaction?.date ? new Date(transaction.date) : autofillData?.date ? new Date(autofillData.date) : new Date(),
-    description: transaction?.description || autofillData?.description || '',
-    type: transaction?.type || autofillData?.type || 'expense' as 'income' | 'expense',
-    amountInclusive: transaction?.amountInclusive || autofillData?.amountInclusive || undefined,
-    amountExclusive: transaction?.amountExclusive || autofillData?.amountExclusive || undefined,
-    vatAmount: transaction?.vatAmount || autofillData?.vatAmount || undefined,
-    vatPercentage: transaction?.vatPercentage ?? autofillData?.vatPercentage ?? 21,
-    invoiceFile: transaction?.invoiceFile
+    description: autofillItem?.description || '',
+    type: autofillItem?.type || 'expense' as 'income' | 'expense',
+    amountInclusive: autofillItem?.amountInclusive || undefined,
+    amountExclusive: autofillItem?.amountExclusive || undefined,
+    vatAmount: autofillItem?.vatAmount || undefined,
+    vatPercentage: autofillItem?.vatPercentage ?? 21
   })
 
   const [errors, setErrors] = useState<FormErrors>({})
-  const [isUploading, setIsUploading] = useState(false)
   const [activeField, setActiveField] = useState<'inclusive' | 'exclusive' | null>(null)
-
-  // Handle autofill data changes
-  useEffect(() => {
-    if (autofillData && !transaction) {
-      setFormData({
-        date: autofillData.date ? new Date(autofillData.date) : new Date(),
-        description: autofillData.description || '',
-        type: autofillData.type || 'expense',
-        amountInclusive: autofillData.amountInclusive || undefined,
-        amountExclusive: autofillData.amountExclusive || undefined,
-        vatAmount: autofillData.vatAmount || undefined,
-        vatPercentage: autofillData.vatPercentage ?? 21,
-        invoiceFile: undefined
-      })
-    }
-  }, [autofillData, transaction])
 
   // Auto-calculate when amounts change, but respect which field the user is editing
   useEffect(() => {
@@ -74,10 +50,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     }
   }, [formData.amountInclusive, formData.amountExclusive, activeField])
 
-
-
   const handleInputChange = (field: string, value: any) => {
-
     setFormData(prev => ({ ...prev, [field]: value }))
     
     // Clear errors when user starts typing
@@ -115,24 +88,6 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     }, 100)
   }
 
-  const handleFileUpload = async () => {
-    setIsUploading(true)
-    try {
-      const fileData = await window.electronAPI.selectFile()
-      if (fileData) {
-        setFormData(prev => ({ ...prev, invoiceFile: fileData }))
-      }
-    } catch (error) {
-      console.error('Error uploading file:', error)
-    } finally {
-      setIsUploading(false)
-    }
-  }
-
-  const handleRemoveFile = () => {
-    setFormData(prev => ({ ...prev, invoiceFile: undefined }))
-  }
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -153,7 +108,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     
     const validationErrors = validateTransaction({
       ...formData,
-      date: formData.date.toISOString().split('T')[0],
+      date: new Date().toISOString().split('T')[0], // Use current date for validation
       vatAmount: finalVatAmount
     })
 
@@ -163,33 +118,18 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     }
 
     onSubmit({
-      date: formData.date.toISOString().split('T')[0],
       description: formData.description,
       type: formData.type,
       amountInclusive: formData.amountInclusive,
       amountExclusive: formData.amountExclusive,
       vatAmount: finalVatAmount,
-      vatPercentage: vatPercentage,
-      invoiceFile: formData.invoiceFile
+      vatPercentage: vatPercentage
     })
   }
 
   return (
     <form onSubmit={handleSubmit} className="transaction-form">
       <div className="form-grid">
-        {/* Date */}
-        <div className="form-group">
-          <label className="form-label">Datum *</label>
-          <DatePicker
-            selected={formData.date}
-            onChange={(date: Date) => handleInputChange('date', date)}
-            dateFormat="dd/MM/yyyy"
-            className={`form-input ${errors.date ? 'error' : ''}`}
-            maxDate={new Date()}
-          />
-          {errors.date && <div className="form-error">{errors.date}</div>}
-        </div>
-
         {/* Description */}
         <div className="form-group">
           <label className="form-label">Omschrijving *</label>
@@ -315,37 +255,6 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         </div>
       )}
 
-      {/* File Upload */}
-      <div className="file-upload">
-        <label className="form-label">Factuur Bestand</label>
-        <div className="upload-controls">
-          <button
-            type="button"
-            onClick={handleFileUpload}
-            disabled={isUploading}
-            className="upload-button"
-          >
-            <Upload />
-            {isUploading ? 'Uploaden...' : 'Bestand Kiezen'}
-          </button>
-          
-          {formData.invoiceFile && (
-            <div className="file-info">
-              <span className="file-name">
-                {formData.invoiceFile.originalName}
-              </span>
-              <button
-                type="button"
-                onClick={handleRemoveFile}
-                className="remove-button"
-              >
-                <X />
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Form Actions */}
       <div className="form-actions">
         <button
@@ -359,9 +268,9 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           type="submit"
           className="btn btn-primary"
         >
-          {transaction ? 'Bijwerken' : 'Toevoegen'}
+          {autofillItem ? 'Bijwerken' : 'Voeg Autofill'}
         </button>
       </div>
     </form>
   )
-} 
+}

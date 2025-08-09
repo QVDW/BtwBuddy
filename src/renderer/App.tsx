@@ -1,27 +1,30 @@
 import React, { useState, useEffect } from 'react'
-import { Transaction } from './types'
+import { Transaction, AutofillItem } from './types'
 import { getMonthlySummary, getAvailableMonths } from './utils/calculations'
 import { TransactionForm } from './components/TransactionForm'
 import { TransactionTable } from './components/TransactionTable'
+import { AutofillPage } from './components/AutofillPage'
 import { MonthSelector } from './components/MonthSelector'
 import { TitleBar } from './components/TitleBar'
 import { Tutorial } from './components/Tutorial'
 import { Settings } from './components/Settings'
 import { Home } from './components/Home'
 import { UpdateNotification } from './components/UpdateNotification'
-import { Plus, BarChart3, FileText, Download, DollarSign, TrendingUp, TrendingDown, Home as HomeIcon, Calendar, Receipt, PieChart, Cog } from 'lucide-react'
+import { Plus, BarChart3, FileText, Download, DollarSign, TrendingUp, TrendingDown, Home as HomeIcon, Calendar, Receipt, PieChart, Cog, Zap } from 'lucide-react'
 import './App.scss'
 import './components/Home.scss'
 import './components/UpdateNotification.scss'
 
 function App() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [autofillItems, setAutofillItems] = useState<AutofillItem[]>([])
   const [selectedMonth, setSelectedMonth] = useState<{ year: number; month: number } | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
+  const [autofillData, setAutofillData] = useState<Omit<Transaction, 'id' | 'createdAt'> | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'home' | 'overview' | 'transactions' | 'reports' | 'tax' | 'vat'>('home')
+  const [activeTab, setActiveTab] = useState<'home' | 'overview' | 'transactions' | 'reports' | 'tax' | 'vat' | 'autofill'>('home')
   const [showTutorial, setShowTutorial] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
@@ -43,6 +46,10 @@ function App() {
       const data = await window.electronAPI.getTransactions()
       setTransactions(data)
       
+      // Load autofill items
+      const autofillData = await window.electronAPI.getAutofillItems()
+      setAutofillItems(autofillData || [])
+      
       // Set current month as default
       const now = new Date()
       setSelectedMonth({ year: now.getFullYear(), month: now.getMonth() + 1 })
@@ -60,6 +67,7 @@ function App() {
       setTransactions(prev => [...prev, newTransaction])
       setShowForm(false)
       setEditingTransaction(null)
+      setAutofillData(null)
     } catch (err) {
       setError('Fout bij het opslaan van transactie')
       console.error('Error saving transaction:', err)
@@ -72,6 +80,7 @@ function App() {
       setTransactions(prev => prev.map(t => t.id === transaction.id ? updatedTransaction : t))
       setShowForm(false)
       setEditingTransaction(null)
+      setAutofillData(null)
     } catch (err) {
       setError('Fout bij het bijwerken van transactie')
       console.error('Error updating transaction:', err)
@@ -92,6 +101,57 @@ function App() {
 
   const handleEditClick = (transaction: Transaction) => {
     setEditingTransaction(transaction)
+    setShowForm(true)
+  }
+
+  // Autofill handlers
+  const handleAddAutofillItem = async (autofillItem: Omit<AutofillItem, 'id' | 'createdAt'>) => {
+    try {
+      const newAutofillItem = await window.electronAPI.saveAutofillItem(autofillItem)
+      setAutofillItems(prev => [...prev, newAutofillItem])
+    } catch (err) {
+      setError('Fout bij het opslaan van autofill item')
+      console.error('Error saving autofill item:', err)
+    }
+  }
+
+  const handleEditAutofillItem = async (autofillItem: AutofillItem) => {
+    try {
+      const updatedAutofillItem = await window.electronAPI.updateAutofillItem(autofillItem)
+      setAutofillItems(prev => prev.map(item => item.id === autofillItem.id ? updatedAutofillItem : item))
+    } catch (err) {
+      setError('Fout bij het bijwerken van autofill item')
+      console.error('Error updating autofill item:', err)
+    }
+  }
+
+  const handleDeleteAutofillItem = async (autofillItemId: string) => {
+    if (!confirm('Weet je zeker dat je dit autofill item wilt verwijderen?')) return
+    
+    try {
+      await window.electronAPI.deleteAutofillItem(autofillItemId)
+      setAutofillItems(prev => prev.filter(item => item.id !== autofillItemId))
+    } catch (err) {
+      setError('Fout bij het verwijderen van autofill item')
+      console.error('Error deleting autofill item:', err)
+    }
+  }
+
+  const handleUseAutofillItem = (autofillItem: AutofillItem) => {
+    // Create a transaction from the autofill item
+    const transaction: Omit<Transaction, 'id' | 'createdAt'> = {
+      date: new Date().toISOString().split('T')[0],
+      description: autofillItem.description,
+      type: autofillItem.type,
+      amountInclusive: autofillItem.amountInclusive,
+      amountExclusive: autofillItem.amountExclusive,
+      vatAmount: autofillItem.vatAmount,
+      vatPercentage: autofillItem.vatPercentage
+    }
+    
+    // Set the autofill data and show the form
+    setAutofillData(transaction)
+    setEditingTransaction(null)
     setShowForm(true)
   }
 
@@ -309,6 +369,14 @@ function App() {
           </div>
           
           <div 
+            className={`server-icon ${activeTab === 'autofill' ? 'active' : 'action'}`}
+            onClick={() => setActiveTab('autofill')}
+            title="Autofill"
+          >
+            <Zap />
+          </div>
+          
+          <div 
             className={`server-icon ${activeTab === 'reports' ? 'active' : 'action'}`}
             onClick={() => setActiveTab('reports')}
             title="Rapporten"
@@ -361,6 +429,7 @@ function App() {
                  {activeTab === 'home' && 'Home'}
                  {activeTab === 'overview' && 'Overzicht'}
                  {activeTab === 'transactions' && 'Transacties'}
+                 {activeTab === 'autofill' && 'Autofill'}
                  {activeTab === 'reports' && 'Rapporten'}
                  {activeTab === 'tax' && 'Belastingaangifte'}
                  {activeTab === 'vat' && 'BTW Aangifte'}
@@ -495,6 +564,17 @@ function App() {
                   />
                 </div>
               </div>
+            )}
+
+            {/* Autofill Tab */}
+            {activeTab === 'autofill' && (
+              <AutofillPage
+                autofillItems={autofillItems}
+                onAddAutofillItem={handleAddAutofillItem}
+                onEditAutofillItem={handleEditAutofillItem}
+                onDeleteAutofillItem={handleDeleteAutofillItem}
+                onUseAutofillItem={handleUseAutofillItem}
+              />
             )}
 
             {/* Reports Tab */}
@@ -861,8 +941,10 @@ function App() {
               onCancel={() => {
                 setShowForm(false)
                 setEditingTransaction(null)
+                setAutofillData(null)
               }}
               transaction={editingTransaction}
+              autofillData={autofillData}
             />
           </div>
         </div>
