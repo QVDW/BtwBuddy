@@ -1,0 +1,10 @@
+[33mc1293e9[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Update version to 1.0.4 in package.json and package-lock.json
+[33m7e2f83f[m[33m ([m[1;31morigin/main[m[33m)[m Add autofill management functionality with IPC handlers and UI integration
+[33m695357e[m Refactor auto-updater to disable auto-download and auto-install; improve error handling by silencing error messages and notifications. Update UpdateNotification component to only show relevant update statuses and enhance styling for better user experience.
+[33m889778e[m added better styling for versionmanager
+[33m8708ea1[m Remove Update Debugger component and related styles; streamline auto-updater logging and error handling in main application files; update documentation to reflect changes in debugging tools and user instructions.
+[33m3ebe35d[m[33m ([m[1;33mtag: [m[1;33mv1.0.3[m[33m)[m Release v1.0.3
+[33m2061742[m Merge pull request #3 from QVDW/dev
+[33mdd15e52[m[33m ([m[1;32mdev[m[33m)[m Enhance release process and auto-updater functionality. Added new scripts for testing and fixing releases in package.json. Updated GitHub Actions workflow for streamlined build and release. Improved logging and error handling in auto-updater, including new IPC handlers for version management and update logs. Updated Settings component to include version management and debugging tools.
+[33m3a658b1[m Merge pull request #2 from QVDW/dev
+[33me631b91[m Merge pull request #1 from QVDW/dev

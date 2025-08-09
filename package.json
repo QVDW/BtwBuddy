@@ -25,14 +25,10 @@
     "lint:fix": "eslint . --ext ts,tsx --fix",
     "type-check": "tsc --noEmit",
     "clean": "rimraf dist build release",
-    "prebuild": "npm run clean",
-    "release": "node scripts/release.js",
-    "test:updater": "node scripts/test-updater.js",
-    "fix-release": "node scripts/fix-release.js"
+    "prebuild": "npm run clean"
   },
   "dependencies": {
     "electron-store": "^8.1.0",
-    "electron-updater": "^6.6.2",
     "exceljs": "^4.4.0",
     "lucide-react": "^0.263.1",
     "react": "^18.2.0",

@@ -9,11 +9,9 @@ import { TitleBar } from './components/TitleBar'
 import { Tutorial } from './components/Tutorial'
 import { Settings } from './components/Settings'
 import { Home } from './components/Home'
-import { UpdateNotification } from './components/UpdateNotification'
 import { Plus, BarChart3, FileText, Download, DollarSign, TrendingUp, TrendingDown, Home as HomeIcon, Calendar, Receipt, PieChart, Cog, Zap } from 'lucide-react'
 import './App.scss'
 import './components/Home.scss'
-import './components/UpdateNotification.scss'
 
 function App() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -978,9 +976,6 @@ function App() {
         onImportData={handleImportData}
         onClearData={handleClearAllData}
       />
-
-      {/* Update Notification */}
-      <UpdateNotification onClose={() => {}} />
     </div>
   )
 }

@@ -3,7 +3,6 @@ import * as path from 'path'
 import * as fs from 'fs'
 import Store from 'electron-store'
 import * as ExcelJS from 'exceljs'
-import { initializeAutoUpdater } from './auto-updater'
 
 // Initialize electron-store for data persistence
 const store = new Store()
@@ -76,11 +75,6 @@ function createWindow(): void {
       splashWindow.close()
     }
     mainWindow?.show()
-    
-    // Initialize auto updater after main window is ready
-    if (mainWindow) {
-      initializeAutoUpdater(mainWindow)
-    }
   })
 
   mainWindow.on('closed', () => {
@@ -750,32 +744,4 @@ ${invoiceFiles.length > 0 ?
 🔧 VatBuddy versie: 1.0.0
 ═══════════════════════════════════════════════════════════════════════════════════`
 }
-
-// New IPC handler to download specific versions
-ipcMain.handle('download-version', async (event, versionInfo) => {
-  try {
-    const { version, downloadUrl, fileName, fileSize } = versionInfo
-    
-    // Download and install the version silently
-    const autoUpdater = require('electron-updater').autoUpdater
-    
-    // Set the specific version URL
-    autoUpdater.setFeedURL({
-      provider: 'github',
-      owner: 'QVDW',
-      repo: 'BtwBuddy',
-      private: false,
-      url: downloadUrl
-    })
-    
-    // Trigger the download and install
-    autoUpdater.downloadUpdate()
-    
-    return { success: true, message: 'Download gestart' }
-  } catch (error) {
-    // Silent fail - don't show error
-    console.error('Download failed:', error)
-    return { success: false, error: 'Download mislukt' }
-  }
-})
 
