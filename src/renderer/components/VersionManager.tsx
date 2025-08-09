@@ -117,27 +117,29 @@ export const VersionManager: React.FC<VersionManagerProps> = ({ onClose }) => {
     setError(null)
 
     try {
-      // Simulate download progress (in a real implementation, you'd track actual download progress)
-      for (let i = 0; i <= 100; i += 10) {
-        setDownloadProgress(prev => ({ ...prev, [release.tag_name]: i }))
-        await new Promise(resolve => setTimeout(resolve, 200))
-      }
-
+      // Start download progress
+      setDownloadProgress(prev => ({ ...prev, [release.tag_name]: 25 }))
+      
       // Trigger the actual download
-      await window.electronAPI.downloadVersion({
+      const result = await window.electronAPI.downloadVersion({
         version: release.tag_name,
         downloadUrl: windowsAsset.browser_download_url,
         fileName: windowsAsset.name,
         fileSize: windowsAsset.size
       })
 
-      setDownloadProgress({ [release.tag_name]: 100 })
-      
-      // Show success message
-      setTimeout(() => {
-        setSelectedVersion(null)
-        setDownloadProgress({})
-      }, 2000)
+      if (result.success) {
+        setDownloadProgress({ [release.tag_name]: 100 })
+        setError(null)
+        
+        // Show success message
+        setTimeout(() => {
+          setSelectedVersion(null)
+          setDownloadProgress({})
+        }, 3000)
+      } else {
+        throw new Error(result.error || 'Download mislukt')
+      }
 
     } catch (error) {
       setError(`Download mislukt: ${error}`)
@@ -273,12 +275,12 @@ export const VersionManager: React.FC<VersionManagerProps> = ({ onClose }) => {
                             {isDownloading ? (
                               <>
                                 <RefreshCw className="spinning" />
-                                Downloaden... {progress}%
+                                Download gestart...
                               </>
                             ) : (
                               <>
                                 <Download />
-                                Download & Installeer
+                                Download in Browser
                               </>
                             )}
                           </button>
@@ -302,7 +304,7 @@ export const VersionManager: React.FC<VersionManagerProps> = ({ onClose }) => {
                         </a>
                       </div>
 
-                      {isDownloading && progress > 0 && progress < 100 && (
+                      {isDownloading && (
                         <div className="download-progress">
                           <div className="progress-bar">
                             <div 

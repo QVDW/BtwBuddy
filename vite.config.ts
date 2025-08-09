@@ -16,7 +16,24 @@ export default defineConfig({
     }
   },
   server: {
-    port: 3000
+    port: 3000,
+    hmr: {
+      port: 3000,
+      protocol: 'ws'
+    },
+    watch: {
+      usePolling: true,
+      interval: 100
+    }
   },
-  publicDir: 'public'
+  css: {
+    devSourcemap: true
+  },
+  publicDir: 'public',
+  optimizeDeps: {
+    exclude: ['electron']
+  },
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
+  }
 }) 

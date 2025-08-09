@@ -24,6 +24,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   minimizeWindow: () => ipcRenderer.invoke('minimize-window'),
   maximizeWindow: () => ipcRenderer.invoke('maximize-window'),
   closeWindow: () => ipcRenderer.invoke('close-window'),
+  
+  // Development utilities
+  reloadApp: () => ipcRenderer.invoke('reload-app'),
+  
+  // Version management
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  downloadVersion: (versionInfo: any) => ipcRenderer.invoke('download-version', versionInfo),
 })
 
 // Type definitions for TypeScript
@@ -44,6 +51,9 @@ declare global {
       minimizeWindow: () => Promise<void>
       maximizeWindow: () => Promise<void>
       closeWindow: () => Promise<void>
+      reloadApp: () => Promise<boolean>
+      getAppVersion: () => Promise<{ version: string }>
+      downloadVersion: (versionInfo: any) => Promise<{ success: boolean, message?: string, error?: string }>
     }
   }
 } 

@@ -52,4 +52,22 @@ export interface ExportData {
   month: number
   transactions: Transaction[]
   files: InvoiceFile[]
+}
+
+export interface ElectronAPI {
+  getTransactions: () => Promise<Transaction[]>
+  saveTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt'>) => Promise<Transaction>
+  updateTransaction: (transaction: Partial<Transaction> & { id: string }) => Promise<Transaction | null>
+  deleteTransaction: (transactionId: string) => Promise<boolean>
+  clearAllData: () => Promise<boolean>
+  getAutofillItems: () => Promise<AutofillItem[]>
+  saveAutofillItem: (autofillItem: Omit<AutofillItem, 'id' | 'createdAt'>) => Promise<AutofillItem>
+  updateAutofillItem: (autofillItem: Partial<AutofillItem> & { id: string }) => Promise<AutofillItem | null>
+  deleteAutofillItem: (autofillItemId: string) => Promise<boolean>
+  selectFile: () => Promise<InvoiceFile | null>
+  exportMonth: (data: ExportData) => Promise<any>
+  minimizeWindow: () => Promise<void>
+  maximizeWindow: () => Promise<void>
+  closeWindow: () => Promise<void>
+  reloadApp: () => Promise<boolean>
 } 

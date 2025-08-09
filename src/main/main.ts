@@ -1,4 +1,4 @@
-﻿import { app, BrowserWindow, ipcMain, dialog } from 'electron'
+﻿import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron'
 import * as path from 'path'
 import * as fs from 'fs'
 import Store from 'electron-store'
@@ -64,7 +64,21 @@ function createWindow(): void {
   // Load the app
   if (process.env.NODE_ENV === 'development') {
     mainWindow.loadURL('http://localhost:3000')
-
+    
+    // Enable hot reloading for development
+    mainWindow.webContents.on('did-fail-load', () => {
+      console.log('Page failed to load, retrying...')
+      setTimeout(() => {
+        mainWindow?.loadURL('http://localhost:3000')
+      }, 1000)
+    })
+    
+    // Listen for reload requests from renderer
+    ipcMain.handle('reload-app', () => {
+      mainWindow?.webContents.reload()
+      return true
+    })
+    
   } else {
     mainWindow.loadFile(path.join(__dirname, 'renderer/index.html'))
   }
@@ -299,6 +313,52 @@ ipcMain.handle('export-month', async (event, { year, month, transactions }) => {
   }
   
   return { success: false, error: 'Export geannuleerd' }
+})
+
+// Version management IPC handlers
+ipcMain.handle('get-app-version', () => {
+  return { version: app.getVersion() }
+})
+
+ipcMain.handle('download-version', async (event, versionInfo) => {
+  try {
+    const { version, downloadUrl, fileName, fileSize } = versionInfo
+    
+    // Show confirmation dialog
+    const result = await dialog.showMessageBox(mainWindow!, {
+      type: 'question',
+      buttons: ['Downloaden', 'Annuleren'],
+      defaultId: 0,
+      title: 'Versie Downloaden',
+      message: `Wil je versie ${version} downloaden en installeren?`,
+      detail: `Bestand: ${fileName}\nGrootte: ${(fileSize / 1024 / 1024).toFixed(2)} MB\n\nDe applicatie zal automatisch opnieuw opstarten na installatie.`
+    })
+    
+    if (result.response === 0) { // User clicked Downloaden
+      // Open the download URL in the default browser
+      // This is the safest approach as it lets the browser handle the download
+      await shell.openExternal(downloadUrl)
+      
+      // Show success message
+      await dialog.showMessageBox(mainWindow!, {
+        type: 'info',
+        buttons: ['OK'],
+        title: 'Download Gestart',
+        message: 'Download gestart in je browser',
+        detail: 'De installer wordt gedownload naar je Downloads map. Open het bestand om de installatie te starten.'
+      })
+      
+      return { success: true, message: 'Download gestart' }
+    } else {
+      return { success: false, message: 'Download geannuleerd' }
+    }
+  } catch (error) {
+    console.error('Error in download-version handler:', error)
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Onbekende fout' 
+    }
+  }
 })
 
 async function createBelastingdienstExcel(transactions: any[]): Promise<ExcelJS.Workbook> {
