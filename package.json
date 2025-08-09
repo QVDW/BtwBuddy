@@ -71,11 +71,6 @@
         "to": "assets"
       }
     ],
-    "publish": {
-      "provider": "github",
-      "owner": "QVDW",
-      "repo": "BtwBuddy"
-    },
     "win": {
       "target": [
         {
