@@ -71,6 +71,7 @@
         "to": "assets"
       }
     ],
+    "publish": false,
     "win": {
       "target": [
         {
