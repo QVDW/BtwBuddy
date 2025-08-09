@@ -1,0 +1,21 @@
+[core]
+    editor = code --wait
+
+[pull]
+    rebase = false
+    ff = only
+    tags = false
+
+[push]
+    followtags = false
+    default = simple
+
+[alias]
+    # Simple commit and push
+    cp = !git commit -m \"$1\" && git push
+    # Commit with message and push
+    commit-push = !git commit -m \"$1\" && git push
+    # Quick status
+    st = status
+    # Quick log
+    lg = log --oneline --graph --decorate
