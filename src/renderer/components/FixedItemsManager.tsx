@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { FixedItem } from '../types'
 import { calculateFromInclusive, calculateFromExclusive, validateTransaction } from '../utils/calculations'
-import { Plus, Edit, Trash2, X } from 'lucide-react'
+import { Plus, Edit, Trash2, X, Lock, Unlock } from 'lucide-react'
 
 interface FixedItemsManagerProps {
   fixedItems: FixedItem[]
@@ -34,9 +34,17 @@ export const FixedItemsManager: React.FC<FixedItemsManagerProps> = ({
   })
   const [errors, setErrors] = useState<{[key: string]: string}>({})
   const [activeField, setActiveField] = useState<'inclusive' | 'exclusive' | null>(null)
+  const [lockedFields, setLockedFields] = useState({ inclusive: false, exclusive: false })
+  const [lastEditedField, setLastEditedField] = useState<'inclusive' | 'exclusive' | null>(null)
+  const [showCustomVat, setShowCustomVat] = useState(false)
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+    
+    // Track which field was last edited
+    if (field === 'amountInclusive' || field === 'amountExclusive') {
+      setLastEditedField(field === 'amountInclusive' ? 'inclusive' : 'exclusive')
+    }
     
     // Clear errors when user starts typing
     if (errors[field]) {
@@ -48,27 +56,81 @@ export const FixedItemsManager: React.FC<FixedItemsManagerProps> = ({
     setActiveField(field)
   }
 
+  // Reset lock state when editing item changes
+  useEffect(() => {
+    setLockedFields({ inclusive: false, exclusive: false })
+    setLastEditedField(null)
+    // Check if VAT percentage is a custom value
+    const standardVatValues = [21, 9, 0]
+    setShowCustomVat(!standardVatValues.includes(formData.vatPercentage ?? 21))
+  }, [editingItem])
+
+  // Check if VAT percentage is custom when it changes
+  useEffect(() => {
+    const standardVatValues = [21, 9, 0]
+    setShowCustomVat(!standardVatValues.includes(formData.vatPercentage ?? 21))
+  }, [formData.vatPercentage])
+
+  // Auto-calculate when amounts change, but respect which field the user is editing and lock states
+  useEffect(() => {
+    if (activeField) return
+
+    const vatPercentage = formData.vatPercentage ?? 0
+
+    // Determine which field to use as source for calculation
+    let sourceField: 'inclusive' | 'exclusive' | null = null
+    
+    const hasInclusive = formData.amountInclusive && formData.amountInclusive > 0
+    const hasExclusive = formData.amountExclusive && formData.amountExclusive > 0
+    
+    // If one is locked, use the unlocked one
+    if (lockedFields.inclusive && !lockedFields.exclusive && hasExclusive) {
+      sourceField = 'exclusive'
+    } else if (lockedFields.exclusive && !lockedFields.inclusive && hasInclusive) {
+      sourceField = 'inclusive'
+    } else if (!lockedFields.inclusive && !lockedFields.exclusive) {
+      // Both unlocked - use last edited, or default to inclusive
+      if (hasInclusive && hasExclusive) {
+        sourceField = lastEditedField || 'inclusive'
+      } else if (hasInclusive) {
+        sourceField = 'inclusive'
+      } else if (hasExclusive) {
+        sourceField = 'exclusive'
+      }
+    }
+
+    // Calculate based on source field
+    if (sourceField === 'inclusive' && !lockedFields.inclusive) {
+      const { amountExclusive, vatAmount } = calculateFromInclusive(formData.amountInclusive!, vatPercentage)
+      setFormData(prev => ({
+        ...prev,
+        amountExclusive: lockedFields.exclusive ? prev.amountExclusive : amountExclusive,
+        vatAmount
+      }))
+    } else if (sourceField === 'exclusive' && !lockedFields.exclusive) {
+      const { amountInclusive, vatAmount } = calculateFromExclusive(formData.amountExclusive!, vatPercentage)
+      setFormData(prev => ({
+        ...prev,
+        amountInclusive: lockedFields.inclusive ? prev.amountInclusive : amountInclusive,
+        vatAmount
+      }))
+    }
+  }, [formData.amountInclusive, formData.amountExclusive, formData.vatPercentage, activeField, lockedFields, lastEditedField])
+
   const handleAmountBlur = () => {
     setTimeout(() => {
       setActiveField(null)
-      const vatPercentage = formData.vatPercentage || 0
-      
-      if (formData.amountInclusive && formData.amountInclusive > 0 && activeField === 'inclusive') {
-        const { amountExclusive, vatAmount } = calculateFromInclusive(formData.amountInclusive, vatPercentage)
-        setFormData(prev => ({
-          ...prev,
-          amountExclusive,
-          vatAmount
-        }))
-      } else if (formData.amountExclusive && formData.amountExclusive > 0 && activeField === 'exclusive') {
-        const { amountInclusive, vatAmount } = calculateFromExclusive(formData.amountExclusive, vatPercentage)
-        setFormData(prev => ({
-          ...prev,
-          amountInclusive,
-          vatAmount
-        }))
-      }
+      // The useEffect will handle the calculation
     }, 100)
+  }
+
+  const toggleLock = (e: React.MouseEvent<HTMLButtonElement>, field: 'inclusive' | 'exclusive') => {
+    e.preventDefault()
+    e.stopPropagation()
+    setLockedFields(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }))
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -132,6 +194,8 @@ export const FixedItemsManager: React.FC<FixedItemsManagerProps> = ({
       vatPercentage: 21
     })
     setErrors({})
+    setLockedFields({ inclusive: false, exclusive: false })
+    setLastEditedField(null)
   }
 
   const handleEdit = (item: FixedItem) => {
@@ -279,49 +343,77 @@ export const FixedItemsManager: React.FC<FixedItemsManagerProps> = ({
               {/* VAT Percentage */}
               <div className="form-group">
                 <label className="form-label">BTW Percentage *</label>
-                <input
-                  type="number"
-                  value={formData.vatPercentage || 0}
+                <select
+                  value={showCustomVat ? 'custom' : (formData.vatPercentage ?? 21)}
                   onChange={(e) => {
-                    const value = parseFloat(e.target.value) || 0
-                    handleInputChange('vatPercentage', value)
-                    
-                    const vatPercentage = value
-                    if (formData.amountInclusive && formData.amountInclusive > 0) {
-                      const { amountExclusive, vatAmount } = calculateFromInclusive(formData.amountInclusive, vatPercentage)
-                      setFormData(prev => ({
-                        ...prev,
-                        amountExclusive,
-                        vatAmount
-                      }))
-                    } else if (formData.amountExclusive && formData.amountExclusive > 0) {
-                      const { amountInclusive, vatAmount } = calculateFromExclusive(formData.amountExclusive, vatPercentage)
-                      setFormData(prev => ({
-                        ...prev,
-                        amountInclusive,
-                        vatAmount
-                      }))
+                    if (e.target.value === 'custom') {
+                      setShowCustomVat(true)
+                      // Keep current value - user can modify it in the input field
+                    } else {
+                      setShowCustomVat(false)
+                      const value = parseFloat(e.target.value)
+                      handleInputChange('vatPercentage', value)
+                      // The useEffect will handle recalculation when vatPercentage changes
                     }
                   }}
                   className={`form-input ${errors.vatPercentage ? 'error' : ''}`}
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  placeholder="21"
-                />
+                >
+                  <option value={21}>21%</option>
+                  <option value={9}>9%</option>
+                  <option value={0}>0%</option>
+                  <option value="custom">Overig</option>
+                </select>
+                {showCustomVat && (
+                  <input
+                    type="number"
+                    value={formData.vatPercentage ?? ''}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value) || 0
+                      handleInputChange('vatPercentage', value)
+                      // The useEffect will handle recalculation when vatPercentage changes
+                    }}
+                    className={`form-input ${errors.vatPercentage ? 'error' : ''}`}
+                    style={{ marginTop: '8px' }}
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    placeholder="Voer percentage in"
+                  />
+                )}
                 {errors.vatPercentage && <div className="form-error">{errors.vatPercentage}</div>}
               </div>
 
               {/* Amount Inclusive */}
               <div className="form-group">
-                <label className="form-label">Bedrag Inclusief BTW</label>
+                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  Bedrag Inclusief BTW
+                  <button
+                    type="button"
+                    onClick={(e) => toggleLock(e, 'inclusive')}
+                    onMouseDown={(e) => e.preventDefault()}
+                    title="Vergrendel dit veld om automatische berekening te voorkomen"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: lockedFields.inclusive ? '#4a90e2' : '#72767d',
+                      outline: 'none'
+                    }}
+                  >
+                    {lockedFields.inclusive ? <Lock size={16} /> : <Unlock size={16} />}
+                  </button>
+                </label>
                 <input
                   type="number"
                   value={formData.amountInclusive || ''}
                   onChange={(e) => handleInputChange('amountInclusive', parseFloat(e.target.value) || undefined)}
                   onFocus={() => handleAmountFocus('inclusive')}
                   onBlur={handleAmountBlur}
-                  className={`form-input ${errors.amountInclusive ? 'error' : ''} ${activeField === 'inclusive' ? 'active' : ''}`}
+                  className={`form-input ${errors.amountInclusive ? 'error' : ''} ${activeField === 'inclusive' ? 'active' : ''} ${lockedFields.inclusive ? 'locked' : ''}`}
+                  style={lockedFields.inclusive ? { color: '#72767d' } : {}}
                   step="0.01"
                   min="0"
                   placeholder="0,00"
@@ -331,14 +423,35 @@ export const FixedItemsManager: React.FC<FixedItemsManagerProps> = ({
 
               {/* Amount Exclusive */}
               <div className="form-group">
-                <label className="form-label">Bedrag Exclusief BTW</label>
+                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  Bedrag Exclusief BTW
+                  <button
+                    type="button"
+                    onClick={(e) => toggleLock(e, 'exclusive')}
+                    onMouseDown={(e) => e.preventDefault()}
+                    title="Vergrendel dit veld om automatische berekening te voorkomen"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: lockedFields.exclusive ? '#4a90e2' : '#72767d',
+                      outline: 'none'
+                    }}
+                  >
+                    {lockedFields.exclusive ? <Lock size={16} /> : <Unlock size={16} />}
+                  </button>
+                </label>
                 <input
                   type="number"
                   value={formData.amountExclusive || ''}
                   onChange={(e) => handleInputChange('amountExclusive', parseFloat(e.target.value) || undefined)}
                   onFocus={() => handleAmountFocus('exclusive')}
                   onBlur={handleAmountBlur}
-                  className={`form-input ${errors.amountExclusive ? 'error' : ''} ${activeField === 'exclusive' ? 'active' : ''}`}
+                  className={`form-input ${errors.amountExclusive ? 'error' : ''} ${activeField === 'exclusive' ? 'active' : ''} ${lockedFields.exclusive ? 'locked' : ''}`}
+                  style={lockedFields.exclusive ? { color: '#72767d' } : {}}
                   step="0.01"
                   min="0"
                   placeholder="0,00"

@@ -3,10 +3,12 @@ export interface Transaction {
   date: string
   description: string
   type: 'income' | 'expense'
+  location: 'Binnenland' | 'Buitenland'
   amountInclusive?: number
   amountExclusive?: number
   vatAmount?: number
   vatPercentage: number
+  privateUse?: number
   invoiceFile?: InvoiceFile
   createdAt: string
 }
@@ -15,10 +17,12 @@ export interface AutofillItem {
   id: string
   description: string
   type: 'income' | 'expense'
+  location: 'Binnenland' | 'Buitenland'
   amountInclusive?: number
   amountExclusive?: number
   vatAmount?: number
   vatPercentage: number
+  privateUse?: number
   createdAt: string
 }
 
@@ -42,6 +46,7 @@ export interface MonthlySummary {
 export interface FormErrors {
   date?: string
   description?: string
+  location?: string
   amountInclusive?: string
   amountExclusive?: string
   vatPercentage?: string

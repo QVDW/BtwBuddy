@@ -9,6 +9,7 @@ import { TitleBar } from './components/TitleBar'
 import { Tutorial } from './components/Tutorial'
 import { Settings } from './components/Settings'
 import { Home } from './components/Home'
+import { VATDeclaration } from './components/VATDeclaration'
 import { Plus, BarChart3, FileText, Download, DollarSign, TrendingUp, TrendingDown, Home as HomeIcon, Calendar, Receipt, PieChart, Cog, Zap } from 'lucide-react'
 import './App.scss'
 import './components/Home.scss'
@@ -141,10 +142,12 @@ function App() {
       date: new Date().toISOString().split('T')[0],
       description: autofillItem.description,
       type: autofillItem.type,
+      location: autofillItem.location,
       amountInclusive: autofillItem.amountInclusive,
       amountExclusive: autofillItem.amountExclusive,
       vatAmount: autofillItem.vatAmount,
-      vatPercentage: autofillItem.vatPercentage
+      vatPercentage: autofillItem.vatPercentage,
+      privateUse: autofillItem.privateUse
     }
     
     // Set the autofill data and show the form
@@ -635,15 +638,6 @@ function App() {
                             €{((monthlySummary.totalVatIncome || 0) - (monthlySummary.totalVatExpense || 0)).toFixed(2)}
                           </span>
                         </div>
-                        <div className="metric-row">
-                          <span className="metric-label">BTW Percentage</span>
-                          <span className="metric-value neutral">
-                            {monthlySummary.totalIncome > 0 
-                              ? `${((monthlySummary.totalVat || 0) / monthlySummary.totalIncome * 100).toFixed(1)}%`
-                              : '0%'
-                            }
-                          </span>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -799,117 +793,7 @@ function App() {
 
             {/* VAT Tab (BTW Aangifte) */}
             {activeTab === 'vat' && (
-              <div className="content-section reports-section">
-                <div className="reports-grid">
-                  <div className="report-card">
-                    <div className="card-header">
-                      <h3 className="card-title">BTW Overzicht (Jaar)</h3>
-                      <div className="card-icon">
-                        <DollarSign />
-                      </div>
-                    </div>
-                    <div className="card-content">
-                      <div className="metric-row">
-                        <span className="metric-label">BTW Inkomsten</span>
-                        <span className="metric-value positive">
-                          €{transactions
-                            .filter(t => t.type === 'income')
-                            .reduce((sum, t) => sum + (t.vatAmount || 0), 0)
-                            .toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="metric-row">
-                        <span className="metric-label">BTW Uitgaven</span>
-                        <span className="metric-value negative">
-                          €{transactions
-                            .filter(t => t.type === 'expense')
-                            .reduce((sum, t) => sum + (t.vatAmount || 0), 0)
-                            .toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="metric-row">
-                        <span className="metric-label">BTW Saldo</span>
-                        <span className={`metric-value ${
-                          transactions
-                            .filter(t => t.type === 'income')
-                            .reduce((sum, t) => sum + (t.vatAmount || 0), 0) -
-                          transactions
-                            .filter(t => t.type === 'expense')
-                            .reduce((sum, t) => sum + (t.vatAmount || 0), 0) >= 0 
-                            ? 'positive' 
-                            : 'negative'
-                        }`}>
-                          €{(transactions
-                            .filter(t => t.type === 'income')
-                            .reduce((sum, t) => sum + (t.vatAmount || 0), 0) -
-                          transactions
-                            .filter(t => t.type === 'expense')
-                            .reduce((sum, t) => sum + (t.vatAmount || 0), 0))
-                            .toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="report-card">
-                    <div className="card-header">
-                      <h3 className="card-title">BTW Per Kwartaal</h3>
-                      <div className="card-icon">
-                        <Calendar />
-                      </div>
-                    </div>
-                    <div className="card-content">
-                      <div className="quarter-grid">
-                        {[1, 2, 3, 4].map(quarter => {
-                          const quarterTransactions = transactions.filter(t => {
-                            const date = new Date(t.date)
-                            const month = date.getMonth() + 1
-                            return Math.ceil(month / 3) === quarter
-                          })
-                          
-                          const vatIncome = quarterTransactions
-                            .filter(t => t.type === 'income')
-                            .reduce((sum, t) => sum + (t.vatAmount || 0), 0)
-                          
-                          const vatExpense = quarterTransactions
-                            .filter(t => t.type === 'expense')
-                            .reduce((sum, t) => sum + (t.vatAmount || 0), 0)
-                          
-                          const vatBalance = vatIncome - vatExpense
-                          
-                          return (
-                            <div key={quarter} className="quarter-item">
-                              <div className="quarter-label">Q{quarter}</div>
-                              <div className={`quarter-value ${vatBalance >= 0 ? 'positive' : 'negative'}`}>
-                                €{vatBalance.toFixed(2)}
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="section-header">
-                  <h3>Alle Transacties voor BTW Aangifte</h3>
-                  <button
-                    className="new-btn"
-                    onClick={() => setShowForm(true)}
-                  >
-                    <Plus />
-                    Nieuwe Transactie
-                  </button>
-                </div>
-                
-                <TransactionTable
-                  transactions={transactions}
-                  onEdit={handleEditClick}
-                  onDelete={handleDeleteTransaction}
-                  selectedMonth={selectedMonth}
-                  showVatAmount={true}
-                />
-              </div>
+              <VATDeclaration transactions={transactions} />
             )}
           </div>
         </div>

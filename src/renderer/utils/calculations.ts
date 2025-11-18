@@ -85,12 +85,22 @@ export function getMonthlySummary(
   const totalVat = filteredTransactions
     .reduce((sum, t) => sum + (t.vatAmount !== undefined && t.vatAmount !== null ? t.vatAmount : 0), 0)
 
+  const totalVatIncome = filteredTransactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + (t.vatAmount !== undefined && t.vatAmount !== null ? t.vatAmount : 0), 0)
+
+  const totalVatExpense = filteredTransactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + (t.vatAmount !== undefined && t.vatAmount !== null ? t.vatAmount : 0), 0)
+
   return {
     year,
     month,
     totalIncome,
     totalExpense,
     totalVat,
+    totalVatIncome,
+    totalVatExpense,
     netResult: totalIncome - totalExpense,
     transactionCount: filteredTransactions.length
   }
@@ -131,6 +141,10 @@ export function validateTransaction(data: Partial<Transaction>): Record<string, 
 
   if (!data.description?.trim()) {
     errors.description = 'Omschrijving is verplicht'
+  }
+
+  if (!data.location) {
+    errors.location = 'Locatie is verplicht'
   }
 
   if (!data.amountInclusive && !data.amountExclusive) {
